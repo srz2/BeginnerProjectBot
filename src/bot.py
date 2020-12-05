@@ -55,6 +55,11 @@ def init_reddit_client():
     reddit.user.me()
     return reddit
 
+def init_config_file():
+    global config
+    config = configparser.ConfigParser()
+    config.read('praw.ini')
+
 def check_file_exists(path, error_msg):
     ''' Check if file exists, if not then quit application '''
     if not os.path.exists(path):
@@ -94,9 +99,7 @@ def initialize():
     ''' Initialize all things used for the application '''
 
     # Read the configuration INI file
-    global config
-    config = configparser.ConfigParser()
-    config.read('praw.ini')
+    init_config_file()
 
     # Import the ideas
     init_ideas()
