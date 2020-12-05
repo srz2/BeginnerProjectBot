@@ -35,6 +35,7 @@ ideas = {
     'hard': [],
 }
 
+file_praw_ini = 'praw.ini'
 file_ideas_csv = 'assets/ideas.csv'
 file_rejection_words = 'assets/rejection_words.txt'
 file_suggestion_words = 'assets/suggestion_words.txt'
@@ -56,6 +57,8 @@ def init_reddit_client():
     return reddit
 
 def init_config_file():
+    check_file_exists(file_praw_ini, "The config file praw.ini is missing")
+
     global config
     config = configparser.ConfigParser()
     config.read('praw.ini')
