@@ -1,0 +1,9 @@
+[DEFAULT]
+client_id=[CLIENT_ID]
+client_secret=[CLIENT_SECRET]
+user_agent=[USER_AGENT]
+username=[REDDIT_USERNAME]
+password=[REDDIT_USER_PASSWORD]
+
+version=0.1
+repo_url=https://github.com/srz2/BeginnerProjectBot
