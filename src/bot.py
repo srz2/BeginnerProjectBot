@@ -44,6 +44,7 @@ ERROR_GENERAL = 1
 ERROR_FILE_MISSING = 2
 
 def create_user_agent():
+    ''' Create the user agent string '''
     c = config['DEFAULT']
     username = c['username']
     version = c['version']
@@ -52,11 +53,14 @@ def create_user_agent():
     return user_agent
 
 def init_reddit_client():
+    ''' Initialize an instance of the PRAW reddit client using the assumed praw.ini in the same directory '''
     reddit = praw.Reddit()
     reddit.user.me()
     return reddit
 
 def init_config_file():
+    ''' Initizalize the config file in the same directory'''
+
     check_file_exists(file_praw_ini, "The config file praw.ini is missing")
 
     global config
@@ -318,11 +322,13 @@ def test():
         print('Unknown test argument:', action)
 
 def turn_ON_simulation_mode():
+    ''' Turn on the simulation flag '''
     global SIMULATE
     SIMULATE = True
     print('Simulation mode turned: ON')
 
 def turn_OFF_simulation_mode():
+    ''' Turn off the simulation flag '''
     global SIMULATE
     SIMULATE = False
     print('Simulation mode turned: OFF')
