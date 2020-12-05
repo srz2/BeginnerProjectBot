@@ -307,6 +307,10 @@ def test():
     elif action == 'sim':
         turn_ON_simulation_mode()
         run()
+    elif action == 'ver':
+        init_config_file()
+        c = config['DEFAULT']
+        print(c['version'])
     else:
         print('Unknown test argument:', action)
 
