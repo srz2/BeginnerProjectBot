@@ -3,10 +3,12 @@
 # This bot will randomly select an idea from a database and optionally
 # based on the given difficulty level, give the user an idea
 #
-# Usage: python3 bot.py <action> <phrase>
-#     action: Possible actions which can be added to bot
+# Usage: python3 bot.py [action] <phrase>
+#     action: All possible actions which can be added to bot
+#         run: Run the default application of the bot
 #         test: Test a specific phrase to determine how the bot interprets it. It does not run the main application
 #         sim: Set the bot to simulation mode where it does not post to reddit
+#         help: Show help/usage output
 #     phrase: This is the phrase to test with the 'test' action
 # 
 
@@ -20,6 +22,7 @@ import random
 import configparser
 
 config = None
+MIN_NUM_ARGS = 1
 
 SIMULATE = False
 SIMULATE_WAIT_TO_CONFIRM = False
@@ -306,11 +309,16 @@ def test_phrase(phrase):
     ratio, count, total, error = process_title(phrase)
     output_stats(phrase, count, total, ratio, error)
 
-def test():
+def start():
     ''' Run test method for the application '''
 
     action = sys.argv[1].lower()
-    if action == 'test':
+    if action == 'run': 
+        if len(sys.argv) > MIN_NUM_ARGS:
+            run()
+        else:
+            print('Too many arguments to run normal operation')
+    elif action == 'test':
         if len(sys.argv) >= 3:
             phrase = sys.argv[2]
             test_phrase(phrase)
@@ -321,6 +329,8 @@ def test():
         init_config_file()
         c = config['DEFAULT']
         print(c['version'])
+    elif action == 'help':
+        show_help()
     else:
         print('Unknown test argument:', action)
 
@@ -336,14 +346,32 @@ def turn_OFF_simulation_mode():
     SIMULATE = False
     print('Simulation mode turned: OFF')
 
+def show_help():
+    output = ''
+
+    output += f'Usage: python3 bot.py [action] <phrase>\n'
+    output += f'    action: All possible actions which can be added to bot\n'
+    output += f'        run: Run the default application of the bot\n'
+    output += f'        test: Test a specific phrase to determine how the bot interprets it. It does not run the main application\n'
+    output += f'        sim: Set the bot to simulation mode where it does not post to reddit\n'
+    output += f'        help: Show help/usage output\n'
+    output += f'    phrase: This is the phrase to test with the "test" action\n'
+
+    print(output)
+
 def main():
     ''' Main method to fire up the application based on command args '''
+    
+    # Remove one args, first one is name of bot
+    num_args = len(sys.argv) - 1
+
     try:
         # Determine type of runtime
-        if len(sys.argv) > 1:
-            test()
+        if num_args >= MIN_NUM_ARGS:
+            start()
         else:
-            run()
+            print(f'Unexpected usage with {num_args} args')
+            show_help()
     except KeyboardInterrupt:
         print('')
 

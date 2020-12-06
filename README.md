@@ -6,6 +6,17 @@ The purpose of this bot would be to scan new posts on the subreddit (titles only
 
 ![Screenshot of a Message suggesting a random project](assets/BeginnerProjectBot_Screenshot.png)
 
+## Usage
+```
+Usage: python3 bot.py [action] <phrase>
+  action: All possible actions which can be added to bot
+    run: Run the default application of the bot
+    test: Test a specific phrase to determine how the bot interprets it. It does not run the main application
+    sim: Set the bot to simulation mode where it does not post to reddit
+    help: Show help/usage output
+  phrase: This is the phrase to test with the "test" action
+```
+
 ## Configuration
 The bot has options for configuration, including its Reddit Settings via a PRAW.INI file. This will hold everything from the secrete key to the version number
 
