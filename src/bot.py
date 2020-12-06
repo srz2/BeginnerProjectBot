@@ -3,13 +3,14 @@
 # This bot will randomly select an idea from a database and optionally
 # based on the given difficulty level, give the user an idea
 #
-# Usage: python3 bot.py [action] <phrase>
+# Usage: python3 bot.py [action] <args...>
 #     action: All possible actions which can be added to bot
 #         run: Run the default application of the bot
 #         test: Test a specific phrase to determine how the bot interprets it. It does not run the main application
+#             phrase: Add this following the test action
 #         sim: Set the bot to simulation mode where it does not post to reddit
+#             confirm: Add this following the test action
 #         help: Show help/usage output
-#     phrase: This is the phrase to test with the 'test' action
 # 
 
 import os
@@ -387,6 +388,14 @@ def start():
             test_phrase(phrase)
     elif action == 'sim':
         turn_ON_simulation_mode()
+
+        if len(sys.argv) >= 3:
+            if sys.argv[2].lower() == 'confirm':
+                global SIMULATE_WAIT_TO_CONFIRM
+                SIMULATE_WAIT_TO_CONFIRM = True
+            else:
+                print('Unknown simulation argument:', sys.argv[2])
+
         run()
     elif action == 'ver':
         init_config_file()
@@ -412,13 +421,14 @@ def turn_OFF_simulation_mode():
 def show_help():
     output = ''
 
-    output += f'Usage: python3 bot.py [action] <phrase>\n'
+    output += f'Usage: python3 bot.py [action] <args...>\n'
     output += f'    action: All possible actions which can be added to bot\n'
     output += f'        run: Run the default application of the bot\n'
     output += f'        test: Test a specific phrase to determine how the bot interprets it. It does not run the main application\n'
+    output += f'            phrase: Add this following the test action\n'
     output += f'        sim: Set the bot to simulation mode where it does not post to reddit\n'
+    output += f'            confirm: Add this following the test action\n'
     output += f'        help: Show help/usage output\n'
-    output += f'    phrase: This is the phrase to test with the "test" action\n'
 
     print(output)
 

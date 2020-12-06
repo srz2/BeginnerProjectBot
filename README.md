@@ -8,13 +8,14 @@ The purpose of this bot would be to scan new posts on the subreddit (titles only
 
 ## Usage
 ```
-Usage: python3 bot.py [action] <phrase>
-  action: All possible actions which can be added to bot
-    run: Run the default application of the bot
-    test: Test a specific phrase to determine how the bot interprets it. It does not run the main application
-    sim: Set the bot to simulation mode where it does not post to reddit
-    help: Show help/usage output
-  phrase: This is the phrase to test with the "test" action
+Usage: python3 bot.py [action] <args...>
+    action: All possible actions which can be added to bot
+        run: Run the default application of the bot
+        test: Test a specific phrase to determine how the bot interprets it. It does not run the main application
+            phrase: Add this following the test a phrase of how the bot would interpret it
+        sim: Set the bot to simulation mode where it does not post to reddit
+            confirm: Add this following to pause at each accepted found post
+        help: Show help/usage output
 ```
 
 ## Configuration
