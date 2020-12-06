@@ -242,7 +242,7 @@ def get_bot_reference_text():
 
     response = ''
     response += f'^(I am a bot, so give praises if I was helpful or curses if I was not.)\n'
-    response += f'^(If you want to undertand me more, my code is on [Github]({repo_url}) )\n'
+    response += f'^(If you want to understand me more, my code is on [Github]({repo_url}) )\n'
 
     return response
 
