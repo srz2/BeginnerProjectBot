@@ -301,10 +301,12 @@ def format_basic_response():
     return response
 
 def prompt_for_confirmation():
-    option = input('Would you like to continue (Y/n):').lower()
+    option = input('Would you like to continue (Y/n/p):').lower()
     if option == 'y' or option == '':
         print('\n\n\n\n\n\n\n\n\n')
         print(f'[{time.time()}]: Waiting for more posts...')
+    elif option == 'p':
+        return option
     else:
         exit(1)
 
@@ -321,7 +323,9 @@ def respond_with_basic_response(submission):
         if SIMULATE:
             print('Would be output:\n', response)
             if SIMULATE_WAIT_TO_CONFIRM:
-                prompt_for_confirmation()
+                option = prompt_for_confirmation()
+                if option == 'p':
+                    reddit_send_response(submission, response)
         else:
             reddit_send_response(submission, response)
 
@@ -341,7 +345,9 @@ def reply_with_idea(submission, idea):
         if SIMULATE:
             print('Would be output:\n', response)
             if SIMULATE_WAIT_TO_CONFIRM:
-                prompt_for_confirmation()
+                option = prompt_for_confirmation()
+                if option == 'p':
+                    reddit_send_response(submission, response)
         else:
             reddit_send_response(submission, response)
     except praw.exceptions.RedditAPIException as e:
