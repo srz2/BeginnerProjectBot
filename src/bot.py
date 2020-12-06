@@ -204,6 +204,7 @@ def submission_has_project_request(submission):
 
     # Process the post's title to check if it pass criteria for project request
     ratio, count, total_words, error = process_title(submission.title)
+    print('Id:', submission.id)
     output_stats(submission.title, count, total_words, ratio, error)
     if error == '':
         # print(f'Accepting:', submission.title)
@@ -256,7 +257,7 @@ def create_link_reference(text, url):
             A link to put in the markdown response to a user
     '''
 
-    return f'- [{text}!]({url})\n'
+    return f'- [{text}]({url})\n'
 
 def format_idea_response(idea):
     ''' Return the formatted text to post to reddit based on a given idea '''
