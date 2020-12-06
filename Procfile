@@ -1,0 +1,1 @@
+bot:python3 create-init.py && cd src && python3 bot.py

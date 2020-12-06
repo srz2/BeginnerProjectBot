@@ -22,11 +22,12 @@ config.read(file_example_ini)
 def get_env(key):
     return os.environ.get(key)
 
-config['DEFAULT']['CLIENT_ID'] = get_env('CLIENT_ID')
-config['DEFAULT']['CLIENT_SECRET'] = get_env('CLIENT_SECRET')
-config['DEFAULT']['USER_AGENT'] = get_env('USER_AGENT')
-config['DEFAULT']['USERNAME'] = get_env('USERNAME')
-config['DEFAULT']['PASSWORD'] = get_env('PASSWORD')
+
+config['DEFAULT']['CLIENT_ID'] = get_env('REDDIT_CLIENT_ID')
+config['DEFAULT']['CLIENT_SECRET'] = get_env('REDDIT_CLIENT_SECRET')
+config['DEFAULT']['USER_AGENT'] = get_env('REDDIT_USER_AGENT')
+config['DEFAULT']['USERNAME'] = get_env('REDDIT_USERNAME')
+config['DEFAULT']['PASSWORD'] = get_env('REDDIT_PASSWORD')
 
 with open(file_output_ini, 'w') as config_file:
     config.write(config_file, space_around_delimiters=False)
