@@ -2,10 +2,13 @@
 # 
 # This bot will randomly select an idea from a database and optionally
 # based on the given difficulty level, give the user an idea
-# 
-# Resources:
-#     https://www.upgrad.com/blog/python-projects-ideas-topics-beginners
 #
+# Usage: python3 bot.py <action> <phrase>
+#     action: Possible actions which can be added to bot
+#         test: Test a specific phrase to determine how the bot interprets it. It does not run the main application
+#         sim: Set the bot to simulation mode where it does not post to reddit
+#     phrase: This is the phrase to test with the 'test' action
+# 
 
 import os
 import sys
