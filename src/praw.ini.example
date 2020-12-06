@@ -5,5 +5,5 @@ user_agent=[USER_AGENT]
 username=[REDDIT_USERNAME]
 password=[REDDIT_USER_PASSWORD]
 
-version=0.1
+version=[APP_VERSION]
 repo_url=https://github.com/srz2/BeginnerProjectBot
