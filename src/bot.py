@@ -192,27 +192,27 @@ def submission_contains_bot_response(submission):
             return True
     return False
 
-def submission_has_idea_request(submission):
-    ''' Determine if the given submission has an idea request '''
+def submission_has_project_request(submission):
+    ''' Determine if the given submission is requesting help for a new project '''
 
-    has_idea_request = False
+    has_project_request = False
 
     # Confirm bot has not commented on post before
     contains_bot_already = submission_contains_bot_response(submission)
     if contains_bot_already:
-        return has_idea_request
+        return has_project_request
 
-    # Process the post's title to check if it pass criteria for idea request
+    # Process the post's title to check if it pass criteria for project request
     ratio, count, total_words, error = process_title(submission.title)
     output_stats(submission.title, count, total_words, ratio, error)
     if error == '':
         # print(f'Accepting:', submission.title)
-        has_idea_request = True
+        has_project_request = True
     else:
         # print(f'Rejecting:', error)
-        has_idea_request = False
+        has_project_request = False
 
-    return has_idea_request
+    return has_project_request
 
 def get_random(ideas, desired_difficulty='none'):
     '''
@@ -281,7 +281,6 @@ def reply_with_idea(submission, idea):
                 print("[Error]: Failed to post new comment")
     except praw.exceptions.RedditAPIException as e:
         print(e)
-    return False
 
 def stream_subreddits(reddit):
     ''' Blocking method to continuously check all 'subreddits_to_scan' for new posts '''
@@ -289,11 +288,9 @@ def stream_subreddits(reddit):
     print('Query:', query, '\n\n----------------')
     subreddits = reddit.subreddit(query)
     for submission in subreddits.stream.submissions():
-        idea_requested = submission_has_idea_request(submission)
-        if idea_requested:
-            idea = get_random(ideas)
-            reply_with_idea(submission, idea)
-    return False
+        project_requested = submission_has_project_request(submission)
+        if project_requested:
+            respond_with_basic_response(submission)
 
 def run():
     ''' Run the main purpose application '''
