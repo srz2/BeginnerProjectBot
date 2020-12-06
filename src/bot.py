@@ -296,8 +296,6 @@ def format_basic_response():
     response += create_link_reference('Automate the Boring Stuff with Python', 'https://automatetheboringstuff.com/')
     response += create_link_reference('RealPyton - Projects', 'https://realpython.com/tutorials/projects/')
     response += '\n'
-    # response += 'If you want a specific suggestion, comment on this saying "project please!"'
-    # response += 'If you want a specific difficulty, add easy/medium/hard to the beginning of your comment!\n'
     response += get_bot_reference_text()
 
     return response
