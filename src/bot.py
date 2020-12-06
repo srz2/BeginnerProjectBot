@@ -49,6 +49,7 @@ file_suggestion_words = 'assets/suggestion_words.txt'
 
 ERROR_GENERAL = 1
 ERROR_FILE_MISSING = 2
+ERROR_LOGIN_FAILED = 3
 
 def create_user_agent():
     ''' Create the user agent string '''
@@ -62,7 +63,12 @@ def create_user_agent():
 def init_reddit_client():
     ''' Initialize an instance of the PRAW reddit client using the assumed praw.ini in the same directory '''
     reddit = praw.Reddit()
-    reddit.user.me()
+    try:
+        reddit.user.me()
+    except:
+        print('Failed to log into bot')
+        exit(ERROR_LOGIN_FAILED)
+
     return reddit
 
 def init_config_file():
