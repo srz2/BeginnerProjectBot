@@ -3,11 +3,14 @@
 # This bot will randomly select an idea from a database and optionally
 # based on the given difficulty level, give the user an idea
 #
-# Usage: python3 bot.py <action> <phrase>
-#     action: Possible actions which can be added to bot
+# Usage: python3 bot.py [action] <args...>
+#     action: All possible actions which can be added to bot
+#         run: Run the default application of the bot
 #         test: Test a specific phrase to determine how the bot interprets it. It does not run the main application
+#             phrase: Add this following the test action
 #         sim: Set the bot to simulation mode where it does not post to reddit
-#     phrase: This is the phrase to test with the 'test' action
+#             confirm: Add this following the test action
+#         help: Show help/usage output
 # 
 
 import os
@@ -20,6 +23,7 @@ import random
 import configparser
 
 config = None
+MIN_NUM_ARGS = 1
 
 SIMULATE = False
 SIMULATE_WAIT_TO_CONFIRM = False
@@ -189,27 +193,28 @@ def submission_contains_bot_response(submission):
             return True
     return False
 
-def submission_has_idea_request(submission):
-    ''' Determine if the given submission has an idea request '''
+def submission_has_project_request(submission):
+    ''' Determine if the given submission is requesting help for a new project '''
 
-    has_idea_request = False
+    has_project_request = False
 
     # Confirm bot has not commented on post before
     contains_bot_already = submission_contains_bot_response(submission)
     if contains_bot_already:
-        return has_idea_request
+        return has_project_request
 
-    # Process the post's title to check if it pass criteria for idea request
+    # Process the post's title to check if it pass criteria for project request
     ratio, count, total_words, error = process_title(submission.title)
+    print('Id:', submission.id)
     output_stats(submission.title, count, total_words, ratio, error)
     if error == '':
         # print(f'Accepting:', submission.title)
-        has_idea_request = True
+        has_project_request = True
     else:
         # print(f'Rejecting:', error)
-        has_idea_request = False
+        has_project_request = False
 
-    return has_idea_request
+    return has_project_request
 
 def get_random(ideas, desired_difficulty='none'):
     '''
@@ -230,10 +235,34 @@ def get_random(ideas, desired_difficulty='none'):
     num = random.randrange(0, len(tmp_ideas))
     return tmp_ideas[num]
 
-def format_response(idea):
-    ''' Return the formatted text to post to reddit '''
+def get_bot_reference_text():
+    ''' Format the text response for bot disclaimer '''
 
     repo_url = config['DEFAULT']['repo_url']
+
+    response = ''
+    response += f'^(I am a bot, so give praises if I was helpful or curses if I was not.)\n'
+    response += f'^(If you want to understand me more, my code is on [Github]({repo_url}) )\n'
+
+    return response
+
+def create_link_reference(text, url):
+    '''
+        Create a link for reddit for response
+
+        Argument:
+            - text (string): The shown text for the link
+            - url (string): The destination URL for the link
+
+        Returns:
+            A link to put in the markdown response to a user
+    '''
+
+    return f'- [{text}]({url})\n'
+
+def format_idea_response(idea):
+    ''' Return the formatted text to post to reddit based on a given idea '''
+
     raw_project_name = idea[0]
     raw_difficulty = idea[1]
     raw_description = idea[2]
@@ -253,32 +282,76 @@ def format_response(idea):
     response += f'Project: **{raw_project_name}** \n\n'
     response += f'I think its a _{difficulty}_ project for you! Try it out but, dont get discouraged. If you need more guidance, here\'s a description:\n'
     response += f'>{raw_description}\n\n\n'
-    response += f'^(I am a bot, so give praises if I was helpful or curses if I was not.)\n'
-    response += f'^(If you want to undertand me more, my code is on [Github]({repo_url}) )\n'
+    response += get_bot_reference_text()
     
     return response
 
-def reply_with_idea(submission, idea):
-    ''' Reply with the idea to given reddit submission (post) '''
-    print('Responding with idea:', idea[0])
-    response = format_response(idea)
+def format_basic_response():
+    ''' Return the formatted text to post to reddit to direct a user to some project resources '''
+
+    response = ''
+    response += f'Hey, I think you are trying to figure out a project to do; Here are some helpful resources:\n\n'
+    response += create_link_reference('/r/learnpython - Wiki', 'https://www.reddit.com/r/learnpython/wiki/index#wiki_flex_your_coding_skill.21')
+    response += create_link_reference('Five mini projects', 'https://knightlab.northwestern.edu/2014/06/05/five-mini-programming-projects-for-the-python-beginner/')
+    response += create_link_reference('Automate the Boring Stuff with Python', 'https://automatetheboringstuff.com/')
+    response += create_link_reference('RealPyton - Projects', 'https://realpython.com/tutorials/projects/')
+    response += '\n'
+    response += get_bot_reference_text()
+
+    return response
+
+def prompt_for_confirmation():
+    option = input('Would you like to continue (Y/n/p):').lower()
+    if option == 'y' or option == '':
+        print('\n\n\n\n\n\n\n\n\n')
+        print(f'[{time.time()}]: Waiting for more posts...')
+    elif option == 'p':
+        return option
+    else:
+        exit(1)
+
+def reddit_send_response(submission, response):
+    new_comment = submission.reply(response)
+    if new_comment == None:
+        print("[Error]: Failed to post new comment")
+
+def respond_with_basic_response(submission):
+    ''' Reply with the basic response to give resources to a user'''
+    print('Responding with basic response')
+    response = format_basic_response()
     try:
         if SIMULATE:
             print('Would be output:\n', response)
             if SIMULATE_WAIT_TO_CONFIRM:
-                option = input('Would you like to continue (Y/n):').lower()
-                if option == 'y' or option == '':
-                    print('\n\n\n\n\n\n\n\n\n')
-                    print(f'[{time.time()}]: Waiting for more posts...')
-                else:
-                    exit(1)
+                option = prompt_for_confirmation()
+                if option == 'p':
+                    reddit_send_response(submission, response)
         else:
-            new_comment = submission.reply(response)
-            if new_comment == None:
-                print("[Error]: Failed to post new comment")
+            reddit_send_response(submission, response)
+
     except praw.exceptions.RedditAPIException as e:
         print(e)
-    return False
+
+def get_idea_and_respond(submission, diffculty='none'):
+    ''' Randomly get an idea and reply to the submission with it '''
+    idea = get_random(ideas, diffculty)
+    reply_with_idea(submission, idea)
+
+def reply_with_idea(submission, idea):
+    ''' Reply with the idea to given reddit submission (post) '''
+    print('Responding with idea:', idea[0])
+    response = format_idea_response(idea)
+    try:
+        if SIMULATE:
+            print('Would be output:\n', response)
+            if SIMULATE_WAIT_TO_CONFIRM:
+                option = prompt_for_confirmation()
+                if option == 'p':
+                    reddit_send_response(submission, response)
+        else:
+            reddit_send_response(submission, response)
+    except praw.exceptions.RedditAPIException as e:
+        print(e)
 
 def stream_subreddits(reddit):
     ''' Blocking method to continuously check all 'subreddits_to_scan' for new posts '''
@@ -286,11 +359,9 @@ def stream_subreddits(reddit):
     print('Query:', query, '\n\n----------------')
     subreddits = reddit.subreddit(query)
     for submission in subreddits.stream.submissions():
-        idea_requested = submission_has_idea_request(submission)
-        if idea_requested:
-            idea = get_random(ideas)
-            reply_with_idea(submission, idea)
-    return False
+        project_requested = submission_has_project_request(submission)
+        if project_requested:
+            respond_with_basic_response(submission)
 
 def run():
     ''' Run the main purpose application '''
@@ -306,21 +377,36 @@ def test_phrase(phrase):
     ratio, count, total, error = process_title(phrase)
     output_stats(phrase, count, total, ratio, error)
 
-def test():
+def start():
     ''' Run test method for the application '''
 
     action = sys.argv[1].lower()
-    if action == 'test':
+    if action == 'run': 
+        if len(sys.argv) > MIN_NUM_ARGS:
+            run()
+        else:
+            print('Too many arguments to run normal operation')
+    elif action == 'test':
         if len(sys.argv) >= 3:
             phrase = sys.argv[2]
             test_phrase(phrase)
     elif action == 'sim':
         turn_ON_simulation_mode()
+
+        if len(sys.argv) >= 3:
+            if sys.argv[2].lower() == 'confirm':
+                global SIMULATE_WAIT_TO_CONFIRM
+                SIMULATE_WAIT_TO_CONFIRM = True
+            else:
+                print('Unknown simulation argument:', sys.argv[2])
+
         run()
     elif action == 'ver':
         init_config_file()
         c = config['DEFAULT']
         print(c['version'])
+    elif action == 'help':
+        show_help()
     else:
         print('Unknown test argument:', action)
 
@@ -336,14 +422,33 @@ def turn_OFF_simulation_mode():
     SIMULATE = False
     print('Simulation mode turned: OFF')
 
+def show_help():
+    output = ''
+
+    output += f'Usage: python3 bot.py [action] <args...>\n'
+    output += f'    action: All possible actions which can be added to bot\n'
+    output += f'        run: Run the default application of the bot\n'
+    output += f'        test: Test a specific phrase to determine how the bot interprets it. It does not run the main application\n'
+    output += f'            phrase: Add this following the test action\n'
+    output += f'        sim: Set the bot to simulation mode where it does not post to reddit\n'
+    output += f'            confirm: Add this following the test action\n'
+    output += f'        help: Show help/usage output\n'
+
+    print(output)
+
 def main():
     ''' Main method to fire up the application based on command args '''
+    
+    # Remove one args, first one is name of bot
+    num_args = len(sys.argv) - 1
+
     try:
         # Determine type of runtime
-        if len(sys.argv) > 1:
-            test()
+        if num_args >= MIN_NUM_ARGS:
+            start()
         else:
-            run()
+            print(f'Unexpected usage with {num_args} args')
+            show_help()
     except KeyboardInterrupt:
         print('')
 
