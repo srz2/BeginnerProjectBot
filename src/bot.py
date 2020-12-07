@@ -30,7 +30,7 @@ SIMULATE_WAIT_TO_CONFIRM = False
 MIN_NUM_WORDS_IN_TITLE = 4
 ACCEPTABLE_RATIO = 0.25
 
-subreddits_to_scan = ['learnpython']
+subreddits_to_scan = ['SRZ2_TestEnvironment']
 
 idea_query_words = []
 active_rejection_words = []
