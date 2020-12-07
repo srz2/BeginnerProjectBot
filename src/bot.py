@@ -30,7 +30,9 @@ SIMULATE_WAIT_TO_CONFIRM = False
 MIN_NUM_WORDS_IN_TITLE = 4
 ACCEPTABLE_RATIO = 0.25
 
-subreddits_to_scan = ['SRZ2_TestEnvironment']
+subreddits_to_scan = []
+subreddits_to_scan_prod = ['learnpython']
+subreddits_to_scan_stag = ['SRZ2_TestEnvironment']
 
 idea_query_words = []
 active_rejection_words = []
@@ -59,6 +61,19 @@ def create_user_agent():
     author = c['author']
     user_agent = f'{username}:{version} (by {author})'
     return user_agent
+
+def audit_app_level():
+    ''' Audit the app level and configure settings on it '''
+    level = os.environ.get('app_level')
+
+    # Change subreddits to scan
+    global subreddits_to_scan
+    if level == 'production':
+        subreddits_to_scan = subreddits_to_scan_prod
+    elif level == 'staging':
+        subreddits_to_scan = subreddits_to_scan_stag
+    else:
+        subreddits_to_scan = subreddits_to_scan_stag
 
 def init_reddit_client():
     ''' Initialize an instance of the PRAW reddit client using the assumed praw.ini in the same directory '''
@@ -447,6 +462,9 @@ def main():
     
     # Remove one args, first one is name of bot
     num_args = len(sys.argv) - 1
+
+    # Differ settings based on app_level
+    audit_app_level()
 
     try:
         # Determine type of runtime
