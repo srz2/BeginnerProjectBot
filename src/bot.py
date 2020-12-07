@@ -248,7 +248,7 @@ def get_bot_reference_text():
 
     response = ''
     response += f'^(I am a bot, so give praises if I was helpful or curses if I was not.)\n'
-    response += f'^(If you want to understand me more, my code is on [Github]({repo_url}) )\n'
+    response += f'^(If you want to understand me more, my code is on) ^[Github]({repo_url})\n'
 
     return response
 
@@ -300,7 +300,7 @@ def format_basic_response():
     response += create_link_reference('/r/learnpython - Wiki', 'https://www.reddit.com/r/learnpython/wiki/index#wiki_flex_your_coding_skill.21')
     response += create_link_reference('Five mini projects', 'https://knightlab.northwestern.edu/2014/06/05/five-mini-programming-projects-for-the-python-beginner/')
     response += create_link_reference('Automate the Boring Stuff with Python', 'https://automatetheboringstuff.com/')
-    response += create_link_reference('RealPyton - Projects', 'https://realpython.com/tutorials/projects/')
+    response += create_link_reference('RealPython - Projects', 'https://realpython.com/tutorials/projects/')
     response += '\n'
     response += get_bot_reference_text()
 
