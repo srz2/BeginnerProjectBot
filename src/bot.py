@@ -206,6 +206,7 @@ def process_comment(content):
 
     for phrase in phrases:
         if phrase in content:
+            # Get the difficulty assuming it is the end of the phrase and the next word
             index = content.index(phrase) + len(phrase)
             difficulty = content[index:].split()[0]
             if not is_recongized_difficulty(difficulty):
