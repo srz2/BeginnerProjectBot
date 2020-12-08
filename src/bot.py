@@ -20,6 +20,7 @@ import math
 import time
 import praw
 import random
+import threading
 import configparser
 
 config = None
@@ -52,6 +53,17 @@ file_suggestion_words = 'assets/suggestion_words.txt'
 ERROR_GENERAL = 1
 ERROR_FILE_MISSING = 2
 ERROR_LOGIN_FAILED = 3
+
+class ThreadCommentChecker(threading.Thread):
+    ''' This thread will check the comments on all queried subreddits '''
+    def __init__(self, name, reddit):
+        threading.Thread.__init__(self)
+        self.name = name
+        self.reddit = reddit
+
+    def run(self):
+        threading.Thread.run(self)
+        stream_subreddits_comments(self.reddit)
 
 def create_user_agent():
     ''' Create the user agent string '''
@@ -331,7 +343,7 @@ def prompt_for_confirmation():
     else:
         exit(1)
 
-def reddit_send_response(submission, response):
+def reddit_send_submission_response(submission, response):
     new_comment = submission.reply(response)
     if new_comment == None:
         print("[Error]: Failed to post new comment")
@@ -346,21 +358,21 @@ def respond_with_basic_response(submission):
             if SIMULATE_WAIT_TO_CONFIRM:
                 option = prompt_for_confirmation()
                 if option == 'p':
-                    reddit_send_response(submission, response)
+                    reddit_send_submission_response(submission, response)
         else:
-            reddit_send_response(submission, response)
+            reddit_send_submission_response(submission, response)
 
     except praw.exceptions.RedditAPIException as e:
         print(e)
 
-def get_idea_and_respond(submission, diffculty='none'):
+def get_idea_and_respond_submission(submission, diffculty='none'):
     ''' Randomly get an idea and reply to the submission with it '''
     idea = get_random(ideas, diffculty)
-    reply_with_idea(submission, idea)
+    reply_submission_with_idea(submission, idea)
 
-def reply_with_idea(submission, idea):
+def reply_submission_with_idea(submission, idea):
     ''' Reply with the idea to given reddit submission (post) '''
-    print('Responding with idea:', idea[0])
+    print('Responding to post with idea:', idea[0])
     response = format_idea_response(idea)
     try:
         if SIMULATE:
@@ -368,16 +380,16 @@ def reply_with_idea(submission, idea):
             if SIMULATE_WAIT_TO_CONFIRM:
                 option = prompt_for_confirmation()
                 if option == 'p':
-                    reddit_send_response(submission, response)
+                    reddit_send_submission_response(submission, response)
         else:
-            reddit_send_response(submission, response)
+            reddit_send_submission_response(submission, response)
     except praw.exceptions.RedditAPIException as e:
         print(e)
 
 def stream_subreddits(reddit):
     ''' Blocking method to continuously check all 'subreddits_to_scan' for new posts '''
     query = '+'.join(subreddits_to_scan)
-    print('Query:', query, '\n\n----------------')
+    print('Post Query:', query, '\n\n----------------')
     subreddits = reddit.subreddit(query)
     for submission in subreddits.stream.submissions():
         project_requested = submission_has_project_request(submission)
@@ -387,7 +399,20 @@ def stream_subreddits(reddit):
 def run():
     ''' Run the main purpose application '''
     reddit = initialize()
-    stream_subreddits(reddit)
+    # stream_subreddits(reddit)
+
+    threads = []
+    thread_post_checker = ThreadPostChecker('Post Checker', reddit)
+    threads.append(thread_post_checker)
+
+    # Start all threads
+    for thread in threads:
+        thread.daemon = True
+        thread.start()
+
+    # Join all threads
+    for thread in threads:
+        thread.join()
 
 def test_phrase(phrase):
     ''' Test a specific phrase to see how the main application would interpret it '''
