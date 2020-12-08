@@ -54,6 +54,18 @@ ERROR_GENERAL = 1
 ERROR_FILE_MISSING = 2
 ERROR_LOGIN_FAILED = 3
 
+
+class ThreadPostChecker(threading.Thread):
+    ''' This thread will check the posts on all queried subreddits '''
+    def __init__(self, name, reddit):
+        threading.Thread.__init__(self)
+        self.name = name
+        self.reddit = reddit
+
+    def run(self):
+        threading.Thread.run(self)
+        stream_subreddits(self.reddit)
+
 class ThreadCommentChecker(threading.Thread):
     ''' This thread will check the comments on all queried subreddits '''
     def __init__(self, name, reddit):
@@ -165,6 +177,36 @@ def initialize():
 
     return reddit
 
+def process_comment(content):
+    '''
+        Process the comment to determine if help is requested within the comment body
+
+        Parameters:
+            content (string): The body of the comment
+
+        Returns:
+            asking_for_help (boolean): The content is asking for a project
+            difficulty (string): The difficulty requested
+    '''
+
+    # Acceptable phrases to trigger the bot
+    phrases = []
+    phrases.append('u/' + config['DEFAULT']['username'])
+    phrases.append('!projectbot')
+
+    # Put to lowercase and remove extras
+    content = content.lower().replace('*', '').replace('_', ' ')
+
+    for phrase in phrases:
+        if phrase in content:
+            index = content.index(phrase) + len(phrase)
+            difficulty = content[index:].split()[0]
+            if not (difficulty == 'easy' or difficulty == 'medium' or difficulty == 'hard'):
+                difficulty = 'none'
+            return True, difficulty
+
+    return False, 'none'
+
 def process_title(title):
     '''
         Process the title to determine if help is requested
@@ -226,6 +268,11 @@ def submission_contains_bot_response(submission):
             return True
     return False
 
+def comment_is_this_bot(comment):
+    ''' Determine if the comment is the bot itself '''
+    if comment.author == config['DEFAULT']['username']:
+        return True
+
 def submission_has_project_request(submission):
     ''' Determine if the given submission is requesting help for a new project '''
 
@@ -248,6 +295,25 @@ def submission_has_project_request(submission):
         has_project_request = False
 
     return has_project_request
+
+def comment_has_project_request(comment):
+    ''' Determine if the given comment is requesting help for a new project '''
+
+    has_project_request = False
+
+    # Confirm we are aren't processing a comment from the bot
+    is_from_bot = comment_is_this_bot(comment)
+    if is_from_bot:
+        return has_project_request
+
+    has_project_request, difficulty = process_comment(comment)
+    print('Id:', comment.id)
+    if not has_project_request:
+        print('Comment is not requesting help')
+    else:
+        print(f'Comment is requesting project with difficulty:', difficulty)
+
+    return has_project_request, difficulty
 
 def get_random(ideas, desired_difficulty='none'):
     '''
@@ -343,6 +409,11 @@ def prompt_for_confirmation():
     else:
         exit(1)
 
+def reddit_send_comment_response(comment, response):
+    new_comment = comment.reply(response)
+    if new_comment == None:
+        print('[Error]: Failed to post new comment')
+
 def reddit_send_submission_response(submission, response):
     new_comment = submission.reply(response)
     if new_comment == None:
@@ -365,10 +436,31 @@ def respond_with_basic_response(submission):
     except praw.exceptions.RedditAPIException as e:
         print(e)
 
+def get_idea_and_respond_comment(comment, difficulty='none'):
+    ''' Randomly get an idea and reply to the submission with it '''
+    idea = get_random(ideas, difficulty)
+    reply_comment_with_idea(comment, idea)
+
 def get_idea_and_respond_submission(submission, diffculty='none'):
     ''' Randomly get an idea and reply to the submission with it '''
     idea = get_random(ideas, diffculty)
     reply_submission_with_idea(submission, idea)
+
+def reply_comment_with_idea(comment, idea):
+    ''' Reply with the idea to given reddit comment '''
+    print('Responding to comment with idea:', idea[0])
+    response = format_idea_response(idea)
+    try:
+        if SIMULATE:
+            print('Would be output:\n', response)
+            if SIMULATE_WAIT_TO_CONFIRM:
+                option = prompt_for_confirmation()
+                if option == 'p':
+                    reddit_send_comment_response(comment, response)
+        else:
+            reddit_send_comment_response(comment, response)
+    except praw.exceptions.RedditAPIException as e:
+        print(e)
 
 def reply_submission_with_idea(submission, idea):
     ''' Reply with the idea to given reddit submission (post) '''
@@ -396,6 +488,16 @@ def stream_subreddits(reddit):
         if project_requested:
             respond_with_basic_response(submission)
 
+def stream_subreddits_comments(reddit):
+    ''' Blocking method to continuously check all 'subreddits_to_scan' for new comments '''
+    query = '+'.join(subreddits_to_scan)
+    print('Comment Query:', query, '\n\n----------------')
+    subreddits = reddit.subreddit(query)
+    for comment in subreddits.stream.comments():
+        project_requested = comment_has_project_request(comment)
+        if project_requested:
+            respond_with_basic_response(comment)
+
 def run():
     ''' Run the main purpose application '''
     reddit = initialize()
@@ -404,6 +506,9 @@ def run():
     threads = []
     thread_post_checker = ThreadPostChecker('Post Checker', reddit)
     threads.append(thread_post_checker)
+
+    thread_comment_checker = ThreadCommentChecker('Comment Stream Checker', reddit)
+    threads.append(thread_comment_checker)
 
     # Start all threads
     for thread in threads:
