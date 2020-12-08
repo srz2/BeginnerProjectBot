@@ -41,7 +41,7 @@ active_rejection_words = []
 ideas = {
     'all': [],
     'easy': [],
-    'intermediate': [],
+    'medium': [],
     'hard': [],
 }
 
@@ -366,7 +366,7 @@ def format_idea_response(idea):
     # Replace the text for the difficulty for diffent output
     if raw_difficulty == 'easy':
         difficulty = 'nice'
-    elif raw_difficulty == 'intermediate':
+    elif raw_difficulty == 'medium':
         difficulty = 'cool'
     elif raw_difficulty == 'hard':
         difficulty = 'challenging'
