@@ -177,6 +177,13 @@ def initialize():
 
     return reddit
 
+def is_recongized_difficulty(dif):
+    dif = dif.lower()
+    if not (dif == 'easy' or dif == 'medium' or dif == 'hard'):
+        return True
+    else:
+        return False
+
 def process_comment(content):
     '''
         Process the comment to determine if help is requested within the comment body
@@ -201,7 +208,7 @@ def process_comment(content):
         if phrase in content:
             index = content.index(phrase) + len(phrase)
             difficulty = content[index:].split()[0]
-            if not (difficulty == 'easy' or difficulty == 'medium' or difficulty == 'hard'):
+            if not is_recongized_difficulty(difficulty):
                 difficulty = 'none'
             return True, difficulty
 
@@ -321,7 +328,7 @@ def get_random(ideas, desired_difficulty='none'):
     Returns:
         idea (csvrow): A random idea
     '''
-    if desired_difficulty == 'easy' or desired_difficulty == 'intermediate' or desired_difficulty == 'hard':
+    if is_recongized_difficulty(desired_difficulty):
         tmp_ideas = ideas[desired_difficulty]
     else:
         tmp_ideas = ideas['all']
