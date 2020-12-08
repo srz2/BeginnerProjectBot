@@ -506,7 +506,6 @@ def stream_subreddits_comments(reddit):
 def run():
     ''' Run the main purpose application '''
     reddit = initialize()
-    # stream_subreddits(reddit)
 
     threads = []
     thread_post_checker = ThreadPostChecker('Post Checker', reddit)
