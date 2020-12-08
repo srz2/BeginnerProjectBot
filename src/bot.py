@@ -276,7 +276,7 @@ def submission_contains_bot_response(submission):
             return True
     return False
 
-def comment_is_this_bot(comment):
+def comment_is_made_by_bot(comment):
     ''' Determine if the comment is the bot itself '''
     if comment.author == config['DEFAULT']['username']:
         return True
@@ -310,7 +310,7 @@ def comment_has_project_request(comment):
     has_project_request = False
 
     # Confirm we are aren't processing a comment from the bot
-    is_from_bot = comment_is_this_bot(comment)
+    is_from_bot = comment_is_made_by_bot(comment)
     if is_from_bot:
         return has_project_request, 'none'
 
