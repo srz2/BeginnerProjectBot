@@ -304,15 +304,10 @@ def comment_has_project_request(comment):
     # Confirm we are aren't processing a comment from the bot
     is_from_bot = comment_is_this_bot(comment)
     if is_from_bot:
-        return has_project_request
+        return has_project_request, 'none'
 
-    has_project_request, difficulty = process_comment(comment)
-    print('Id:', comment.id)
-    if not has_project_request:
-        print('Comment is not requesting help')
-    else:
-        print(f'Comment is requesting project with difficulty:', difficulty)
-
+    has_project_request, difficulty = process_comment(comment.body)
+    
     return has_project_request, difficulty
 
 def get_random(ideas, desired_difficulty='none'):
@@ -496,9 +491,9 @@ def stream_subreddits_comments(reddit):
     print('Comment Query:', query, '\n\n----------------')
     subreddits = reddit.subreddit(query)
     for comment in subreddits.stream.comments():
-        project_requested = comment_has_project_request(comment)
+        project_requested, difficulty = comment_has_project_request(comment)
         if project_requested:
-            respond_with_basic_response(comment)
+            get_idea_and_respond_comment(comment, difficulty)
 
 def run():
     ''' Run the main purpose application '''
