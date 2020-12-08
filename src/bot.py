@@ -336,9 +336,9 @@ def get_bot_reference_text():
 
     response = ''
     response += f'^(I am a bot, so give praises if I was helpful or curses if I was not.)\n\n'
-    response += f'^(If you want a specific project to be given to you, **comment** with the bot''s name or **!projectbot** ).'
-    response += f'^(If you want a certain difficulty, add on easy, medium, hard to your comment!)\n'
-    response += f'^(If you want to understand me more, my code is on) ^[Github]({repo_url})\n'
+    response += f'^(Want a project recommendation? Comment with *!projectbot* ).'
+    response += f'^(If you want a certain difficulty, add on easy, medium, hard to your comment!)'
+    response += f'^(If you want to understand me more, my code is on) ^[Github]({repo_url})'
 
     return response
 
