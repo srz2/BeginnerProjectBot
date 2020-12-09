@@ -179,7 +179,7 @@ def initialize():
 
 def is_recongized_difficulty(dif):
     dif = dif.lower()
-    if dif == 'easy' or dif == 'medium' or dif == 'hard' or dif == 'none':
+    if dif == 'easy' or dif == 'medium' or dif == 'hard' or dif == 'all':
         return True
     else:
         return False
@@ -204,7 +204,7 @@ def process_comment(content):
     # Put to lowercase and remove extras
     content = content.lower().replace('*', '').replace('_', ' ')
 
-    difficulty = 'none'
+    difficulty = 'all'
     for phrase in phrases:
         if phrase in content:
             # Get the difficulty assuming it is the end of the phrase and the next word
@@ -212,10 +212,10 @@ def process_comment(content):
             if index < len(content):
                 difficulty = content[index:].split()[0]
             if not is_recongized_difficulty(difficulty):
-                difficulty = 'none'
+                difficulty = 'all'
             return True, difficulty
 
-    return False, 'none'
+    return False, ''
 
 def process_title(title):
     '''
@@ -351,13 +351,13 @@ def comment_has_project_request(comment):
     
     return has_project_request, difficulty
 
-def get_random(ideas, desired_difficulty='none'):
+def get_random(ideas, desired_difficulty='all'):
     '''
     Get a random idea from the list
 
     Argument:
         ideas (list<csvrow>): The list of ideas parsed from database
-        desired_difficulty (string): The default difficulty. Defaults (none/all).
+        desired_difficulty (string): The default difficulty. Defaults to all.
 
     Returns:
         idea (csvrow): A random idea
@@ -473,12 +473,12 @@ def respond_with_basic_response(submission):
     except praw.exceptions.RedditAPIException as e:
         print(e)
 
-def get_idea_and_respond_comment(comment, difficulty='none'):
+def get_idea_and_respond_comment(comment, difficulty='all'):
     ''' Randomly get an idea and reply to the submission with it '''
     idea = get_random(ideas, difficulty)
     reply_comment_with_idea(comment, idea)
 
-def get_idea_and_respond_submission(submission, diffculty='none'):
+def get_idea_and_respond_submission(submission, diffculty='all'):
     ''' Randomly get an idea and reply to the submission with it '''
     idea = get_random(ideas, diffculty)
     reply_submission_with_idea(submission, idea)
