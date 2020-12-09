@@ -273,14 +273,19 @@ def output_stats(title, count, total, ratio, error_msg):
 
 def submission_contains_bot_response(submission):
     ''' Determine if the submission contains the bot post already '''
+
+    username = config['DEFAULT']['username']
+
     for comment in submission.comments:
-        if comment.author == config['DEFAULT']['username']:
+        if comment.author == username:
             return True
     return False
 
 def comment_is_made_by_bot(comment):
     ''' Determine if the comment is the bot itself '''
-    if comment.author == config['DEFAULT']['username']:
+
+    username = config['DEFAULT']['username']
+    if comment.author == username:
         return True
 
 def submission_has_project_request(submission):
