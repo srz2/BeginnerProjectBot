@@ -271,6 +271,21 @@ def output_stats(title, count, total, ratio, error_msg):
 
     print(f'Title: {title}\nCount: {count}\nLenth: {total}\nRatio: {ratio}\nStatus: {status}\nError Message: {error_msg}\n-------------')
 
+
+def comment_already_has_bot_response(comment):
+    ''' Determine if comment already contains the bot''s response'''
+
+    username = config['DEFAULT']['username']
+
+    # This is potentially intensive if calling for every comment
+    # Inititally the replies list is empty unless this is called
+    comment.refresh()
+
+    for inner_comment in comment.replies:
+        if inner_comment.author == username:
+            return True
+    return False
+
 def submission_contains_bot_response(submission):
     ''' Determine if the submission contains the bot post already '''
 
@@ -287,6 +302,8 @@ def comment_is_made_by_bot(comment):
     username = config['DEFAULT']['username']
     if comment.author == username:
         return True
+
+    return False
 
 def submission_has_project_request(submission):
     ''' Determine if the given submission is requesting help for a new project '''
@@ -322,6 +339,15 @@ def comment_has_project_request(comment):
         return has_project_request, ''
 
     has_project_request, difficulty = process_comment(comment.body)
+    if has_project_request:
+        # Confirm bot hasn't already responded to this comment already
+        # This is after the process_comment() because it can be intensive
+        # on every comment
+        bot_already_responded = comment_already_has_bot_response(comment)
+        if bot_already_responded:
+            # Override the request
+            has_project_request = False
+            return has_project_request, ''
     
     return has_project_request, difficulty
 
