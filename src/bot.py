@@ -179,7 +179,7 @@ def initialize():
 
 def is_recongized_difficulty(dif):
     dif = dif.lower()
-    if not (dif == 'easy' or dif == 'medium' or dif == 'hard'):
+    if dif == 'easy' or dif == 'medium' or dif == 'hard' or dif == 'none':
         return True
     else:
         return False
@@ -204,11 +204,13 @@ def process_comment(content):
     # Put to lowercase and remove extras
     content = content.lower().replace('*', '').replace('_', ' ')
 
+    difficulty = 'none'
     for phrase in phrases:
         if phrase in content:
             # Get the difficulty assuming it is the end of the phrase and the next word
             index = content.index(phrase) + len(phrase)
-            difficulty = content[index:].split()[0]
+            if index < len(content):
+                difficulty = content[index:].split()[0]
             if not is_recongized_difficulty(difficulty):
                 difficulty = 'none'
             return True, difficulty
@@ -312,7 +314,7 @@ def comment_has_project_request(comment):
     # Confirm we are aren't processing a comment from the bot
     is_from_bot = comment_is_made_by_bot(comment)
     if is_from_bot:
-        return has_project_request, 'none'
+        return has_project_request, ''
 
     has_project_request, difficulty = process_comment(comment.body)
     
@@ -453,7 +455,7 @@ def get_idea_and_respond_submission(submission, diffculty='none'):
 
 def reply_comment_with_idea(comment, idea):
     ''' Reply with the idea to given reddit comment '''
-    print('Responding to comment with idea:', idea[0])
+    print(f'Responding to comment({comment.permalink}) with idea:', idea[0])
     response = format_idea_response(idea)
     try:
         if SIMULATE:
