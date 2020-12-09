@@ -376,9 +376,8 @@ def get_bot_reference_text():
     repo_url = config['DEFAULT']['repo_url']
 
     response = ''
-    response += f'^(I am a bot, so give praises if I was helpful or curses if I was not.)\n\n'
-    response += f'^(Want a project recommendation? Comment with *!projectbot* ).'
-    response += f'^(If you want a certain difficulty, add on easy, medium, hard to your comment!)'
+    response += f'^(I am a bot, so give praises if I was helpful or curses if I was not.)\n'
+    response += f'^(Want a project? Comment with **!projectbot** and opptionally add easy, medium, or hard to request a difficulty!)\n'
     response += f'^(If you want to understand me more, my code is on) ^[Github]({repo_url})'
 
     return response
@@ -417,7 +416,7 @@ def format_idea_response(idea):
     response = ''
     response += f'Hey, I think you are trying to figure out a project to do; how about this one?\n\n'
     response += f'Project: **{raw_project_name}** \n\n'
-    response += f'I think its a _{difficulty}_ project for you! Try it out but, dont get discouraged. If you need more guidance, here\'s a description:\n'
+    response += f'I think it''s a _' + difficulty + '_ project for you! Try it out but, dont get discouraged. If you need more guidance, here\'s a description:\n'
     response += f'>{raw_description}\n\n\n'
     response += get_bot_reference_text()
     
