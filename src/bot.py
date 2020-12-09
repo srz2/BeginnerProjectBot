@@ -20,6 +20,7 @@ import math
 import time
 import praw
 import random
+import threading
 import configparser
 
 config = None
@@ -27,8 +28,9 @@ MIN_NUM_ARGS = 1
 
 SIMULATE = False
 SIMULATE_WAIT_TO_CONFIRM = False
-MIN_NUM_WORDS_IN_TITLE = 4
+MIN_NUM_WORDS_IN_TITLE = 5
 ACCEPTABLE_RATIO = 0.25
+RATE_LIMIT_SLEEP_TIME = 600    # 10 minutes
 
 subreddits_to_scan = []
 subreddits_to_scan_prod = ['learnpython']
@@ -40,7 +42,7 @@ active_rejection_words = []
 ideas = {
     'all': [],
     'easy': [],
-    'intermediate': [],
+    'medium': [],
     'hard': [],
 }
 
@@ -52,6 +54,29 @@ file_suggestion_words = 'assets/suggestion_words.txt'
 ERROR_GENERAL = 1
 ERROR_FILE_MISSING = 2
 ERROR_LOGIN_FAILED = 3
+
+
+class ThreadPostChecker(threading.Thread):
+    ''' This thread will check the posts on all queried subreddits '''
+    def __init__(self, name, reddit):
+        threading.Thread.__init__(self)
+        self.name = name
+        self.reddit = reddit
+
+    def run(self):
+        threading.Thread.run(self)
+        stream_subreddits(self.reddit)
+
+class ThreadCommentChecker(threading.Thread):
+    ''' This thread will check the comments on all queried subreddits '''
+    def __init__(self, name, reddit):
+        threading.Thread.__init__(self)
+        self.name = name
+        self.reddit = reddit
+
+    def run(self):
+        threading.Thread.run(self)
+        stream_subreddits_comments(self.reddit)
 
 def create_user_agent():
     ''' Create the user agent string '''
@@ -153,6 +178,46 @@ def initialize():
 
     return reddit
 
+def is_recongized_difficulty(dif):
+    dif = dif.lower()
+    if dif == 'easy' or dif == 'medium' or dif == 'hard' or dif == 'all':
+        return True
+    else:
+        return False
+
+def process_comment(content):
+    '''
+        Process the comment to determine if help is requested within the comment body
+
+        Parameters:
+            content (string): The body of the comment
+
+        Returns:
+            asking_for_help (boolean): The content is asking for a project
+            difficulty (string): The difficulty requested
+    '''
+
+    # Acceptable phrases to trigger the bot
+    phrases = []
+    phrases.append('u/' + config['DEFAULT']['username'])
+    phrases.append('!projectbot')
+
+    # Put to lowercase and remove extras
+    content = content.lower().replace('*', '').replace('_', ' ')
+
+    difficulty = 'all'
+    for phrase in phrases:
+        if phrase in content:
+            # Get the difficulty assuming it is the end of the phrase and the next word
+            index = content.index(phrase) + len(phrase)
+            if index < len(content):
+                difficulty = content[index:].split()[0]
+            if not is_recongized_difficulty(difficulty):
+                difficulty = 'all'
+            return True, difficulty
+
+    return False, ''
+
 def process_title(title):
     '''
         Process the title to determine if help is requested
@@ -207,11 +272,38 @@ def output_stats(title, count, total, ratio, error_msg):
 
     print(f'Title: {title}\nCount: {count}\nLenth: {total}\nRatio: {ratio}\nStatus: {status}\nError Message: {error_msg}\n-------------')
 
+
+def comment_already_has_bot_response(comment):
+    ''' Determine if comment already contains the bot''s response'''
+
+    username = config['DEFAULT']['username']
+
+    # This is potentially intensive if calling for every comment
+    # Inititally the replies list is empty unless this is called
+    comment.refresh()
+
+    for inner_comment in comment.replies:
+        if inner_comment.author == username:
+            return True
+    return False
+
 def submission_contains_bot_response(submission):
     ''' Determine if the submission contains the bot post already '''
+
+    username = config['DEFAULT']['username']
+
     for comment in submission.comments:
-        if comment.author == config['DEFAULT']['username']:
+        if comment.author == username:
             return True
+    return False
+
+def comment_is_made_by_bot(comment):
+    ''' Determine if the comment is the bot itself '''
+
+    username = config['DEFAULT']['username']
+    if comment.author == username:
+        return True
+
     return False
 
 def submission_has_project_request(submission):
@@ -237,18 +329,41 @@ def submission_has_project_request(submission):
 
     return has_project_request
 
-def get_random(ideas, desired_difficulty='none'):
+def comment_has_project_request(comment):
+    ''' Determine if the given comment is requesting help for a new project '''
+
+    has_project_request = False
+
+    # Confirm we are aren't processing a comment from the bot
+    is_from_bot = comment_is_made_by_bot(comment)
+    if is_from_bot:
+        return has_project_request, ''
+
+    has_project_request, difficulty = process_comment(comment.body)
+    if has_project_request:
+        # Confirm bot hasn't already responded to this comment already
+        # This is after the process_comment() because it can be intensive
+        # on every comment
+        bot_already_responded = comment_already_has_bot_response(comment)
+        if bot_already_responded:
+            # Override the request
+            has_project_request = False
+            return has_project_request, ''
+    
+    return has_project_request, difficulty
+
+def get_random(ideas, desired_difficulty='all'):
     '''
     Get a random idea from the list
 
     Argument:
         ideas (list<csvrow>): The list of ideas parsed from database
-        desired_difficulty (string): The default difficulty. Defaults (none/all).
+        desired_difficulty (string): The default difficulty. Defaults to all.
 
     Returns:
         idea (csvrow): A random idea
     '''
-    if desired_difficulty == 'easy' or desired_difficulty == 'intermediate' or desired_difficulty == 'hard':
+    if is_recongized_difficulty(desired_difficulty):
         tmp_ideas = ideas[desired_difficulty]
     else:
         tmp_ideas = ideas['all']
@@ -263,7 +378,8 @@ def get_bot_reference_text():
 
     response = ''
     response += f'^(I am a bot, so give praises if I was helpful or curses if I was not.)\n'
-    response += f'^(If you want to understand me more, my code is on) ^[Github]({repo_url})\n'
+    response += f'^(Want a project? Comment with "!projectbot" and opptionally add easy, medium, or hard to request a difficulty!)\n'
+    response += f'^(If you want to understand me more, my code is on) ^[Github]({repo_url})'
 
     return response
 
@@ -291,7 +407,7 @@ def format_idea_response(idea):
     # Replace the text for the difficulty for diffent output
     if raw_difficulty == 'easy':
         difficulty = 'nice'
-    elif raw_difficulty == 'intermediate':
+    elif raw_difficulty == 'medium':
         difficulty = 'cool'
     elif raw_difficulty == 'hard':
         difficulty = 'challenging'
@@ -301,7 +417,7 @@ def format_idea_response(idea):
     response = ''
     response += f'Hey, I think you are trying to figure out a project to do; how about this one?\n\n'
     response += f'Project: **{raw_project_name}** \n\n'
-    response += f'I think its a _{difficulty}_ project for you! Try it out but, dont get discouraged. If you need more guidance, here\'s a description:\n'
+    response += f'I think it''s a _' + difficulty + '_ project for you! Try it out but, dont get discouraged. If you need more guidance, here\'s a description:\n'
     response += f'>{raw_description}\n\n\n'
     response += get_bot_reference_text()
     
@@ -331,7 +447,12 @@ def prompt_for_confirmation():
     else:
         exit(1)
 
-def reddit_send_response(submission, response):
+def reddit_send_comment_response(comment, response):
+    new_comment = comment.reply(response)
+    if new_comment == None:
+        print('[Error]: Failed to post new comment')
+
+def reddit_send_submission_response(submission, response):
     new_comment = submission.reply(response)
     if new_comment == None:
         print("[Error]: Failed to post new comment")
@@ -346,21 +467,29 @@ def respond_with_basic_response(submission):
             if SIMULATE_WAIT_TO_CONFIRM:
                 option = prompt_for_confirmation()
                 if option == 'p':
-                    reddit_send_response(submission, response)
+                    reddit_send_submission_response(submission, response)
         else:
-            reddit_send_response(submission, response)
-
+            reddit_send_submission_response(submission, response)
+        return True
     except praw.exceptions.RedditAPIException as e:
         print(e)
+        return False
 
-def get_idea_and_respond(submission, diffculty='none'):
+def get_idea_and_respond_comment(comment, difficulty='all'):
+    ''' Randomly get an idea and reply to the submission with it '''
+    idea = get_random(ideas, difficulty)
+    success = reply_comment_with_idea(comment, idea)
+    return success
+
+def get_idea_and_respond_submission(submission, diffculty='all'):
     ''' Randomly get an idea and reply to the submission with it '''
     idea = get_random(ideas, diffculty)
-    reply_with_idea(submission, idea)
+    success = reply_submission_with_idea(submission, idea)
+    return success
 
-def reply_with_idea(submission, idea):
-    ''' Reply with the idea to given reddit submission (post) '''
-    print('Responding with idea:', idea[0])
+def reply_comment_with_idea(comment, idea):
+    ''' Reply with the idea to given reddit comment '''
+    print(f'Responding to comment({comment.permalink}) with idea:', idea[0])
     response = format_idea_response(idea)
     try:
         if SIMULATE:
@@ -368,26 +497,80 @@ def reply_with_idea(submission, idea):
             if SIMULATE_WAIT_TO_CONFIRM:
                 option = prompt_for_confirmation()
                 if option == 'p':
-                    reddit_send_response(submission, response)
+                    reddit_send_comment_response(comment, response)
         else:
-            reddit_send_response(submission, response)
+            reddit_send_comment_response(comment, response)
+        return True
     except praw.exceptions.RedditAPIException as e:
         print(e)
+        return False
+
+def reply_submission_with_idea(submission, idea):
+    ''' Reply with the idea to given reddit submission (post) '''
+    print('Responding to post with idea:', idea[0])
+    response = format_idea_response(idea)
+    try:
+        if SIMULATE:
+            print('Would be output:\n', response)
+            if SIMULATE_WAIT_TO_CONFIRM:
+                option = prompt_for_confirmation()
+                if option == 'p':
+                    reddit_send_submission_response(submission, response)
+        else:
+            reddit_send_submission_response(submission, response)
+        return True
+    except praw.exceptions.RedditAPIException as e:
+        print(e)
+        return False
 
 def stream_subreddits(reddit):
     ''' Blocking method to continuously check all 'subreddits_to_scan' for new posts '''
     query = '+'.join(subreddits_to_scan)
-    print('Query:', query, '\n\n----------------')
+    print('Post Query:', query, '\n\n----------------')
     subreddits = reddit.subreddit(query)
     for submission in subreddits.stream.submissions():
         project_requested = submission_has_project_request(submission)
         if project_requested:
-            respond_with_basic_response(submission)
+            success = respond_with_basic_response(submission)
+            if not success:
+                print('Failed to respond to post, trying again in', RATE_LIMIT_SLEEP_TIME, 'seconds')
+                time.sleep(RATE_LIMIT_SLEEP_TIME + 5)
+                respond_with_basic_response(submission)
+
+def stream_subreddits_comments(reddit):
+    ''' Blocking method to continuously check all 'subreddits_to_scan' for new comments '''
+    query = '+'.join(subreddits_to_scan)
+    print('Comment Query:', query, '\n\n----------------')
+    subreddits = reddit.subreddit(query)
+    for comment in subreddits.stream.comments():
+        project_requested, difficulty = comment_has_project_request(comment)
+        if project_requested:
+            success = get_idea_and_respond_comment(comment, difficulty)
+            if not success:
+                print('Failed to respond to comment, trying again in', RATE_LIMIT_SLEEP_TIME, 'seconds')
+                time.sleep(RATE_LIMIT_SLEEP_TIME + 5)
+                get_idea_and_respond_comment(comment, difficulty)
+
 
 def run():
     ''' Run the main purpose application '''
     reddit = initialize()
-    stream_subreddits(reddit)
+
+    threads = []
+    thread_post_checker = ThreadPostChecker('Post Checker', reddit)
+    threads.append(thread_post_checker)
+
+    thread_comment_checker = ThreadCommentChecker('Comment Stream Checker', reddit)
+    threads.append(thread_comment_checker)
+
+    # Start all threads
+    for thread in threads:
+        thread.daemon = True
+        thread.start()
+
+    # Join all threads
+    for thread in threads:
+        thread.join()
 
 def test_phrase(phrase):
     ''' Test a specific phrase to see how the main application would interpret it '''
