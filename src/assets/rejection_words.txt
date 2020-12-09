@@ -1,4 +1,5 @@
 api
+bot
 first
 help
 group
