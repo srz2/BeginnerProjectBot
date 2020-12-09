@@ -30,6 +30,7 @@ SIMULATE = False
 SIMULATE_WAIT_TO_CONFIRM = False
 MIN_NUM_WORDS_IN_TITLE = 5
 ACCEPTABLE_RATIO = 0.25
+RATE_LIME_SLEEP_TIME = 600    # 10 minutes
 
 subreddits_to_scan = []
 subreddits_to_scan_prod = ['learnpython']
@@ -469,19 +470,22 @@ def respond_with_basic_response(submission):
                     reddit_send_submission_response(submission, response)
         else:
             reddit_send_submission_response(submission, response)
-
+        return True
     except praw.exceptions.RedditAPIException as e:
         print(e)
+        return False
 
 def get_idea_and_respond_comment(comment, difficulty='all'):
     ''' Randomly get an idea and reply to the submission with it '''
     idea = get_random(ideas, difficulty)
-    reply_comment_with_idea(comment, idea)
+    success = reply_comment_with_idea(comment, idea)
+    return success
 
 def get_idea_and_respond_submission(submission, diffculty='all'):
     ''' Randomly get an idea and reply to the submission with it '''
     idea = get_random(ideas, diffculty)
-    reply_submission_with_idea(submission, idea)
+    success = reply_submission_with_idea(submission, idea)
+    return success
 
 def reply_comment_with_idea(comment, idea):
     ''' Reply with the idea to given reddit comment '''
@@ -496,8 +500,10 @@ def reply_comment_with_idea(comment, idea):
                     reddit_send_comment_response(comment, response)
         else:
             reddit_send_comment_response(comment, response)
+        return True
     except praw.exceptions.RedditAPIException as e:
         print(e)
+        return False
 
 def reply_submission_with_idea(submission, idea):
     ''' Reply with the idea to given reddit submission (post) '''
@@ -512,8 +518,10 @@ def reply_submission_with_idea(submission, idea):
                     reddit_send_submission_response(submission, response)
         else:
             reddit_send_submission_response(submission, response)
+        return True
     except praw.exceptions.RedditAPIException as e:
         print(e)
+        return False
 
 def stream_subreddits(reddit):
     ''' Blocking method to continuously check all 'subreddits_to_scan' for new posts '''
@@ -523,7 +531,11 @@ def stream_subreddits(reddit):
     for submission in subreddits.stream.submissions():
         project_requested = submission_has_project_request(submission)
         if project_requested:
-            respond_with_basic_response(submission)
+            success = respond_with_basic_response(submission)
+            if not success:
+                print('Failed to respond to post, trying again in', RATE_LIME_SLEEP_TIME, 'seconds')
+                time.sleep(RATE_LIME_SLEEP_TIME + 5)
+                respond_with_basic_response(submission)
 
 def stream_subreddits_comments(reddit):
     ''' Blocking method to continuously check all 'subreddits_to_scan' for new comments '''
@@ -533,7 +545,12 @@ def stream_subreddits_comments(reddit):
     for comment in subreddits.stream.comments():
         project_requested, difficulty = comment_has_project_request(comment)
         if project_requested:
-            get_idea_and_respond_comment(comment, difficulty)
+            success = get_idea_and_respond_comment(comment, difficulty)
+            if not success:
+                print('Failed to respond to comment, trying again in', RATE_LIME_SLEEP_TIME, 'seconds')
+                time.sleep(RATE_LIME_SLEEP_TIME + 5)
+                get_idea_and_respond_comment(comment, difficulty)
+
 
 def run():
     ''' Run the main purpose application '''
