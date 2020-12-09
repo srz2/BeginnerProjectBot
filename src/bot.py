@@ -30,7 +30,7 @@ SIMULATE = False
 SIMULATE_WAIT_TO_CONFIRM = False
 MIN_NUM_WORDS_IN_TITLE = 5
 ACCEPTABLE_RATIO = 0.25
-RATE_LIME_SLEEP_TIME = 600    # 10 minutes
+RATE_LIMIT_SLEEP_TIME = 600    # 10 minutes
 
 subreddits_to_scan = []
 subreddits_to_scan_prod = ['learnpython']
@@ -533,8 +533,8 @@ def stream_subreddits(reddit):
         if project_requested:
             success = respond_with_basic_response(submission)
             if not success:
-                print('Failed to respond to post, trying again in', RATE_LIME_SLEEP_TIME, 'seconds')
-                time.sleep(RATE_LIME_SLEEP_TIME + 5)
+                print('Failed to respond to post, trying again in', RATE_LIMIT_SLEEP_TIME, 'seconds')
+                time.sleep(RATE_LIMIT_SLEEP_TIME + 5)
                 respond_with_basic_response(submission)
 
 def stream_subreddits_comments(reddit):
@@ -547,8 +547,8 @@ def stream_subreddits_comments(reddit):
         if project_requested:
             success = get_idea_and_respond_comment(comment, difficulty)
             if not success:
-                print('Failed to respond to comment, trying again in', RATE_LIME_SLEEP_TIME, 'seconds')
-                time.sleep(RATE_LIME_SLEEP_TIME + 5)
+                print('Failed to respond to comment, trying again in', RATE_LIMIT_SLEEP_TIME, 'seconds')
+                time.sleep(RATE_LIMIT_SLEEP_TIME + 5)
                 get_idea_and_respond_comment(comment, difficulty)
 
 
