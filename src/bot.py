@@ -118,7 +118,7 @@ def init_config_file():
 
     global config
     config = configparser.ConfigParser()
-    config.read('praw.ini')
+    config.read(file_praw_ini)
 
 def check_file_exists(path, error_msg):
     ''' Check if file exists, if not then quit application '''
