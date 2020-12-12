@@ -54,7 +54,7 @@ file_suggestion_words = 'assets/suggestion_words.txt'
 ERROR_GENERAL = 1
 ERROR_FILE_MISSING = 2
 ERROR_LOGIN_FAILED = 3
-
+ERROR_FILE_UPDATE = 4
 
 class ThreadPostChecker(threading.Thread):
     ''' This thread will check the posts on all queried subreddits '''
@@ -80,7 +80,11 @@ class ThreadCommentChecker(threading.Thread):
 
 def create_user_agent():
     ''' Create the user agent string '''
-    c = config['DEFAULT']
+
+    temp_config = configparser.ConfigParser()
+    temp_config.read(file_praw_ini)
+
+    c = temp_config['DEFAULT']
     username = c['username']
     version = c['version']
     author = c['author']
@@ -111,14 +115,34 @@ def init_reddit_client():
 
     return reddit
 
+def add_user_agent_to_ini(new_user_agent):
+    ''' Put new user agent text into the ini file '''
+
+    temp_config = configparser.ConfigParser()
+    temp_config.read(file_praw_ini)
+    temp_config['DEFAULT']['user_agent'] = new_user_agent
+
+    with open(file_praw_ini, 'w') as config_writer:
+        temp_config.write(config_writer)
+
 def init_config_file():
     ''' Initizalize the config file in the same directory'''
 
     check_file_exists(file_praw_ini, "The config file praw.ini is missing")
 
+    # Dynamically create user agent and modify to current INI file
+    app_user_agent = create_user_agent()
+    add_user_agent_to_ini(app_user_agent)
+
     global config
     config = configparser.ConfigParser()
     config.read(file_praw_ini)
+
+    # Check that defailt user agent is not in INI file, quit if it is
+    if config['DEFAULT']['user_agent'] == '[USER_AGENT]':
+        print('Failed to update INI with user_agent')
+        sys.exit(ERROR_FILE_UPDATE)
+
 
 def check_file_exists(path, error_msg):
     ''' Check if file exists, if not then quit application '''
