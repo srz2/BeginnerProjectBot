@@ -20,7 +20,10 @@ config = configparser.ConfigParser()
 config.read(file_example_ini)
 
 def get_env(key):
-    return os.environ.get(key)
+    value = os.environ.get(key)
+    if value == None:
+        value = '[' + key.replace('REDDIT_', '') + ']'
+    return value
 
 
 config['DEFAULT']['CLIENT_ID'] = get_env('REDDIT_CLIENT_ID')
