@@ -260,7 +260,7 @@ def process_title(title):
 
     # Put to lowercase and remove extras
     title = title.lower().replace("?", "").replace("!", "").replace(".", "").replace(",", "").replace("/", " ").replace("[", "").replace("]", "")
-    words = title.split()
+    words = list(set(title.split()))
 
     count = 0
     total_words = len(words)
