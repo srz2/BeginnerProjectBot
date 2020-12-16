@@ -204,7 +204,7 @@ def initialize():
 
 def is_recongized_difficulty(dif):
     dif = dif.lower()
-    if dif == 'easy' or dif == 'medium' or dif == 'hard' or dif == 'all':
+    if dif in ['easy', 'medium', 'hard', 'all']:
         return True
     else:
         return False
