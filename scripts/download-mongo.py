@@ -8,7 +8,7 @@ load_dotenv()
 
 username = os.environ.get('MONGO_USERNAME')
 password = os.environ.get('MONGO_PASSWORD')
-dbname = os.environ.get('MONGO_DATABASE_NAME')
+dbname = os.environ.get('MONGO_DATABASE')
 if None in [username, password, dbname]:
     print('Configuration failed')
     exit(1)
