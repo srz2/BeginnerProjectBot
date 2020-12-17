@@ -143,7 +143,6 @@ def init_config_file():
         print('Failed to update INI with user_agent')
         sys.exit(ERROR_FILE_UPDATE)
 
-
 def check_file_exists(path, error_msg):
     ''' Check if file exists, if not then quit application '''
     if not os.path.exists(path):
@@ -295,7 +294,6 @@ def output_stats(title, count, total, ratio, error_msg):
         status = 'Rejected'
 
     print(f'Title: {title}\nCount: {count}\nLenth: {total}\nRatio: {ratio}\nStatus: {status}\nError Message: {error_msg}\n-------------')
-
 
 def comment_already_has_bot_response(comment):
     ''' Determine if comment already contains the bot''s response'''
@@ -574,7 +572,6 @@ def stream_subreddits_comments(reddit):
                 print('Failed to respond to comment, trying again in', RATE_LIMIT_SLEEP_TIME, 'seconds')
                 time.sleep(RATE_LIMIT_SLEEP_TIME + 5)
                 get_idea_and_respond_comment(comment, difficulty)
-
 
 def run():
     ''' Run the main purpose application '''
