@@ -1,1 +1,1 @@
-worker: python create-init.py && cd src && python bot.py run
+worker: cd srcipts && python create-init.py && cd ../src && python bot.py run
