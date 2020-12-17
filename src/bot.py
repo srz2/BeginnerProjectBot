@@ -22,6 +22,7 @@ import praw
 import random
 import threading
 import configparser
+from pymongo import MongoClient
 
 config = None
 MIN_NUM_ARGS = 1
@@ -47,9 +48,15 @@ ideas = {
 }
 
 file_praw_ini = 'praw.ini'
+
 file_ideas_csv = 'assets/ideas.csv'
+coll_ideas_mongo = 'ideas'
+
 file_rejection_words = 'assets/rejection_words.txt'
+coll_rejection_mongo = 'rejection-words'
+
 file_suggestion_words = 'assets/suggestion_words.txt'
+coll_suggestion_mongo = 'suggestion-words'
 
 ERROR_GENERAL = 1
 ERROR_FILE_MISSING = 2
@@ -149,7 +156,36 @@ def check_file_exists(path, error_msg):
         print(error_msg)
         sys.exit(ERROR_FILE_MISSING)
 
-def init_ideas():
+def get_docs_from_collection(list_name):
+    ''' Get the doc collection from a collection '''
+    dbname = config['DEFAULT']['username']
+    username = config['DEFAULT']['mongo_username']
+    password = config['DEFAULT']['mongo_password']
+
+    client = MongoClient(f'mongodb+srv://{username}:{password}@cluster0.5398r.mongodb.net/{dbname}?retryWrites=true&w=majority')
+    database = client.get_database(dbname)
+    collection = database.get_collection(list_name)
+
+    docs = collection.find({})
+    return docs
+
+def get_list_from_collection(list_name):
+    ''' Get a list of terms from a collection '''
+    all = []
+    docs = get_docs_from_collection(list_name)
+    for doc in docs:
+        all.append(doc['term'])
+
+    return all
+
+def add_to_idea_list(newIdea):
+    if not isinstance(newIdea, list):
+        raise Exception('Failed to add new idea, not a list object')
+    difficulty = newIdea[1].replace('"', '').strip()
+    ideas['all'].append(newIdea)
+    ideas[difficulty].append(newIdea)
+
+def load_ideas_internal():
     ''' Open the Ideas Database and fill idea stucture '''
 
     check_file_exists(file_ideas_csv, 'Ideas csv is missing')
@@ -158,11 +194,28 @@ def init_ideas():
         for index, row in enumerate(reader):
             if index == 0:
                 continue
-            diffculty = row[1].replace('"', '').strip()
-            ideas['all'].append(row)
-            ideas[diffculty].append(row)
+            add_to_idea_list(row)
 
-def init_suggestion_words():
+def load_ideas_mongodb():
+    docs = get_docs_from_collection(coll_ideas_mongo)
+    for doc in docs:
+        idea = [
+            doc['name'],
+            doc['difficulty'],
+            doc['description']
+        ]
+        add_to_idea_list(idea)
+
+def init_ideas():
+    ''' Loads the ideas from external DB '''
+
+    try:
+        load_ideas_mongodb()
+    except Exception as e:
+        print('[Error]:', e)
+        load_ideas_internal()
+
+def load_suggestion_words_internal():
     ''' Open the suggestion words database and fill list '''
 
     check_file_exists(file_suggestion_words, 'Suggestion text file is missing')
@@ -170,13 +223,45 @@ def init_suggestion_words():
         global idea_query_words
         idea_query_words = reader.read().split()
 
-def init_rejection_words():
+def load_suggestion_words_mongo():
+    ''' Get the suggestion words from mongodb '''
+    suggestions = get_list_from_collection(coll_suggestion_mongo)
+
+    global idea_query_words
+    idea_query_words = suggestions
+
+def init_suggestion_words():
+    ''' Loads the suggestion words from external DB '''
+    try:
+        load_suggestion_words_mongo()
+    except Exception as e:
+        print('[Error]:', e)
+        load_suggestion_words_internal()
+        pass
+
+def load_rejection_words_default():
     ''' Opne the rejection words database and fill list '''
 
     check_file_exists(file_rejection_words, 'Rejection text file is missing')
     with open(file_rejection_words, 'r') as reader:
         global active_rejection_words
         active_rejection_words = reader.read().split()
+
+def load_rejection_words_mongo():
+    ''' Get the rejection words from mongodb '''
+
+    rejections = get_list_from_collection(coll_rejection_mongo)
+
+    global active_rejection_words
+    active_rejection_words = rejections
+
+def init_rejection_words():
+    ''' Loads the rejectin words from external DB '''
+    try:
+        load_rejection_words_mongo()
+    except Exception as e:
+        print('[Error]:', e)
+        load_rejection_words_default()
 
 def initialize():
     ''' Initialize all things used for the application '''
