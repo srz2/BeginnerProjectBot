@@ -4,6 +4,13 @@ client_secret=[REDDIT_CLIENT_SECRET]
 user_agent=[REDDIT_USER_AGENT]
 username=[REDDIT_USERNAME]
 password=[REDDIT_USER_PASSWORD]
+
+; App Information
 version=0.5
 author=/u/srz2
 repo_url=https://github.com/srz2/BeginnerProjectBot
+
+; MongoDB
+mongo_username=[MONGO_USERNAME]
+mongo_password=[MONGO_PASSWORD]
+mongo_database=[MONGO_DATABASE]
