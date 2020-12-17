@@ -470,6 +470,11 @@ def get_random(ideas, desired_difficulty='all'):
     Returns:
         idea (csvrow): A random idea
     '''
+
+    # Check ideas is filled
+    if len(ideas['all']) == 0:
+        return None
+
     if is_recongized_difficulty(desired_difficulty):
         tmp_ideas = ideas[desired_difficulty]
     else:
@@ -596,6 +601,10 @@ def get_idea_and_respond_submission(submission, diffculty='all'):
 
 def reply_comment_with_idea(comment, idea):
     ''' Reply with the idea to given reddit comment '''
+    if idea == None:
+        print('[CRIT]: Attempting to reply comment with a nulled idea')
+        return False
+
     print(f'Responding to comment({comment.permalink}) with idea:', idea[0])
     response = format_idea_response(idea)
     try:
