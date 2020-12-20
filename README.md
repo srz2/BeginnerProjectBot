@@ -14,7 +14,7 @@ An alternate action is to have the user 'call' the bot by using the phrase **!pr
 
 ## Reddit Usage
 
-The **BeginnerProjectBot** has two primary function;Indirect and direct methods. 
+The **BeginnerProjectBot** has two primary function; Indirect and direct methods. 
 
 ### Indirect Method
 
