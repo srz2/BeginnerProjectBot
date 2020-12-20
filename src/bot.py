@@ -287,6 +287,9 @@ def initialize():
     return reddit
 
 def is_recongized_difficulty(dif):
+    if dif is None:
+        return False
+
     dif = dif.lower()
     if dif in ['easy', 'medium', 'hard', 'all']:
         return True

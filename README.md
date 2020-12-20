@@ -1,6 +1,8 @@
 BeginnerProjectBot
 ==================
 
+![Travis-Ci Build](https://img.shields.io/travis/srz2/BeginnerProjectBot)
+
 ## Introduction
 The purpose of this bot would be to scan new posts on given subreddits (titles only) and if they contain a certain amount of specific words the bot will act on it. To attempt to process only relevant posts, it has a crude method of using a ratio of specific words to the length of words in the post. Although not fool proof, mixed with a couple other facts, the hope is to get a pretty reliable response.
 
@@ -14,7 +16,7 @@ An alternate action is to have the user 'call' the bot by using the phrase **!pr
 
 ## Reddit Usage
 
-The **BeginnerProjectBot** has two primary function;Indirect and direct methods. 
+The **BeginnerProjectBot** has two primary function; Indirect and direct methods. 
 
 ### Indirect Method
 
