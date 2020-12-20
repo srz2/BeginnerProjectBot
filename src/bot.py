@@ -211,9 +211,11 @@ def init_ideas():
 
     try:
         load_ideas_mongodb()
+        print('Loaded ideas from mongo')
     except Exception as e:
         print('[Error]:', e)
         load_ideas_internal()
+        print('Loaded ideas from internal')
 
 def load_suggestion_words_internal():
     ''' Open the suggestion words database and fill list '''
@@ -234,9 +236,11 @@ def init_suggestion_words():
     ''' Loads the suggestion words from external DB '''
     try:
         load_suggestion_words_mongo()
+        print('Loaded suggestions from mongo')
     except Exception as e:
         print('[Error]:', e)
         load_suggestion_words_internal()
+        print('Loaded suggestions from internal')
         pass
 
 def load_rejection_words_default():
@@ -259,9 +263,11 @@ def init_rejection_words():
     ''' Loads the rejectin words from external DB '''
     try:
         load_rejection_words_mongo()
+        print('Loaded rejections from mongo')
     except Exception as e:
         print('[Error]:', e)
         load_rejection_words_default()
+        print('Loaded rejections from internal')
 
 def initialize():
     ''' Initialize all things used for the application '''
