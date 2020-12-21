@@ -1,16 +1,7 @@
-# ProgrammingIdeaBot
+# BeginnerProjectBot
 # 
 # This bot will randomly select an idea from a database and optionally
 # based on the given difficulty level, give the user an idea
-#
-# Usage: python3 bot.py [action] <args...>
-#     action: All possible actions which can be added to bot
-#         run: Run the default application of the bot
-#         test: Test a specific phrase to determine how the bot interprets it. It does not run the main application
-#             phrase: Add this following the test action
-#         sim: Set the bot to simulation mode where it does not post to reddit
-#             confirm: Add this following the test action
-#         help: Show help/usage output
 # 
 
 import os
@@ -24,23 +15,10 @@ import threading
 import configparser
 from pymongo import MongoClient
 from projectbot.Constants import *
+from projectbot.Internals import *
 
 config = None
-
-SIMULATE = False
-SIMULATE_WAIT_TO_CONFIRM = False
-
-subreddits_to_scan = []
-
-idea_query_words = []
-active_rejection_words = []
-
-ideas = {
-    'all': [],
-    'easy': [],
-    'medium': [],
-    'hard': [],
-}
+app : BotInternals = None
 
 class ThreadPostChecker(threading.Thread):
     ''' This thread will check the posts on all queried subreddits '''
@@ -157,13 +135,6 @@ def get_list_from_collection(list_name):
 
     return all
 
-def add_to_idea_list(newIdea):
-    if not isinstance(newIdea, list):
-        raise Exception('Failed to add new idea, not a list object')
-    difficulty = newIdea[1].replace('"', '').strip()
-    ideas['all'].append(newIdea)
-    ideas[difficulty].append(newIdea)
-
 def load_ideas_internal():
     ''' Open the Ideas Database and fill idea stucture '''
 
@@ -173,7 +144,7 @@ def load_ideas_internal():
         for index, row in enumerate(reader):
             if index == 0:
                 continue
-            add_to_idea_list(row)
+            app.add_to_idea_list(row)
 
 def load_ideas_mongodb():
     docs = get_docs_from_collection(Asset.coll_ideas_mongo)
@@ -183,7 +154,7 @@ def load_ideas_mongodb():
             doc['difficulty'],
             doc['description']
         ]
-        add_to_idea_list(idea)
+        app.add_to_idea_list(idea)
 
 def init_ideas():
     ''' Loads the ideas from external DB '''
@@ -256,7 +227,7 @@ def initialize():
 
     # Import the ideas
     init_ideas()
-    print('Read:', len(ideas['all']), 'idea entries')
+    print('Read:', len(app.ideas['all']), 'idea entries')
 
     # Import suggestion words
     init_suggestion_words()
@@ -562,9 +533,9 @@ def respond_with_basic_response(submission):
     print('Responding with basic response')
     response = format_basic_response()
     try:
-        if SIMULATE:
+        if app.SIMULATE:
             print('Would be output:\n', response)
-            if SIMULATE_WAIT_TO_CONFIRM:
+            if app.SIMULATE_WAIT_TO_CONFIRM:
                 option = prompt_for_confirmation()
                 if option == 'p':
                     reddit_send_submission_response(submission, response)
@@ -577,13 +548,13 @@ def respond_with_basic_response(submission):
 
 def get_idea_and_respond_comment(comment, difficulty='all'):
     ''' Randomly get an idea and reply to the submission with it '''
-    idea = get_random(ideas, difficulty)
+    idea = get_random(app.ideas, difficulty)
     success = reply_comment_with_idea(comment, idea)
     return success
 
 def get_idea_and_respond_submission(submission, diffculty='all'):
     ''' Randomly get an idea and reply to the submission with it '''
-    idea = get_random(ideas, diffculty)
+    idea = get_random(app.ideas, diffculty)
     success = reply_submission_with_idea(submission, idea)
     return success
 
@@ -596,9 +567,9 @@ def reply_comment_with_idea(comment, idea):
     print(f'Responding to comment({comment.permalink}) with idea:', idea[0])
     response = format_idea_response(idea)
     try:
-        if SIMULATE:
+        if app.SIMULATE:
             print('Would be output:\n', response)
-            if SIMULATE_WAIT_TO_CONFIRM:
+            if app.SIMULATE_WAIT_TO_CONFIRM:
                 option = prompt_for_confirmation()
                 if option == 'p':
                     reddit_send_comment_response(comment, response)
@@ -614,9 +585,9 @@ def reply_submission_with_idea(submission, idea):
     print('Responding to post with idea:', idea[0])
     response = format_idea_response(idea)
     try:
-        if SIMULATE:
+        if app.SIMULATE:
             print('Would be output:\n', response)
-            if SIMULATE_WAIT_TO_CONFIRM:
+            if app.SIMULATE_WAIT_TO_CONFIRM:
                 option = prompt_for_confirmation()
                 if option == 'p':
                     reddit_send_submission_response(submission, response)
@@ -698,12 +669,11 @@ def start():
             phrase = sys.argv[2]
             test_phrase(phrase)
     elif action == 'sim':
-        turn_ON_simulation_mode()
+        app.turn_ON_simulation_mode()
 
         if len(sys.argv) >= 3:
             if sys.argv[2].lower() == 'confirm':
-                global SIMULATE_WAIT_TO_CONFIRM
-                SIMULATE_WAIT_TO_CONFIRM = True
+                app.SIMULATE_WAIT_TO_CONFIRM = True
             else:
                 print('Unknown simulation argument:', sys.argv[2])
 
@@ -716,18 +686,6 @@ def start():
         show_help()
     else:
         print('Unknown test argument:', action)
-
-def turn_ON_simulation_mode():
-    ''' Turn on the simulation flag '''
-    global SIMULATE
-    SIMULATE = True
-    print('Simulation mode turned: ON')
-
-def turn_OFF_simulation_mode():
-    ''' Turn off the simulation flag '''
-    global SIMULATE
-    SIMULATE = False
-    print('Simulation mode turned: OFF')
 
 def show_help():
     output = ''
@@ -763,4 +721,5 @@ def main():
         print('')
 
 if __name__ == "__main__":
+    app = BotInternals()
     main()
