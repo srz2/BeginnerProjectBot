@@ -23,19 +23,14 @@ import random
 import threading
 import configparser
 from pymongo import MongoClient
+from projectbot.Constants import *
 
 config = None
-MIN_NUM_ARGS = 1
 
 SIMULATE = False
 SIMULATE_WAIT_TO_CONFIRM = False
-MIN_NUM_WORDS_IN_TITLE = 5
-ACCEPTABLE_RATIO = 0.25
-RATE_LIMIT_SLEEP_TIME = 600    # 10 minutes
 
 subreddits_to_scan = []
-subreddits_to_scan_prod = ['learnpython']
-subreddits_to_scan_stag = ['SRZ2_TestEnvironment']
 
 idea_query_words = []
 active_rejection_words = []
@@ -46,22 +41,6 @@ ideas = {
     'medium': [],
     'hard': [],
 }
-
-file_praw_ini = 'praw.ini'
-
-file_ideas_csv = 'assets/ideas.csv'
-coll_ideas_mongo = 'ideas'
-
-file_rejection_words = 'assets/rejection_words.txt'
-coll_rejection_mongo = 'rejection-words'
-
-file_suggestion_words = 'assets/suggestion_words.txt'
-coll_suggestion_mongo = 'suggestion-words'
-
-ERROR_GENERAL = 1
-ERROR_FILE_MISSING = 2
-ERROR_LOGIN_FAILED = 3
-ERROR_FILE_UPDATE = 4
 
 class ThreadPostChecker(threading.Thread):
     ''' This thread will check the posts on all queried subreddits '''
@@ -89,7 +68,7 @@ def create_user_agent():
     ''' Create the user agent string '''
 
     temp_config = configparser.ConfigParser()
-    temp_config.read(file_praw_ini)
+    temp_config.read(Asset.file_praw_ini)
 
     c = temp_config['DEFAULT']
     username = c['username']
@@ -105,11 +84,11 @@ def audit_app_level():
     # Change subreddits to scan
     global subreddits_to_scan
     if level == 'production':
-        subreddits_to_scan = subreddits_to_scan_prod
+        subreddits_to_scan = Const.SUBREDDITS_TO_SCAN_PROD
     elif level == 'staging':
-        subreddits_to_scan = subreddits_to_scan_stag
+        subreddits_to_scan = Const.SUBREDDITS_TO_SCAN_STAG
     else:
-        subreddits_to_scan = subreddits_to_scan_stag
+        subreddits_to_scan = Const.SUBREDDITS_TO_SCAN_STAG
 
 def init_reddit_client():
     ''' Initialize an instance of the PRAW reddit client using the assumed praw.ini in the same directory '''
@@ -118,7 +97,7 @@ def init_reddit_client():
         reddit.user.me()
     except:
         print('Failed to log into bot')
-        exit(ERROR_LOGIN_FAILED)
+        exit(Error.LOGIN_FAILED)
 
     return reddit
 
@@ -126,16 +105,16 @@ def add_user_agent_to_ini(new_user_agent):
     ''' Put new user agent text into the ini file '''
 
     temp_config = configparser.ConfigParser()
-    temp_config.read(file_praw_ini)
+    temp_config.read(Asset.file_praw_ini)
     temp_config['DEFAULT']['user_agent'] = new_user_agent
 
-    with open(file_praw_ini, 'w') as config_writer:
+    with open(Asset.file_praw_ini, 'w') as config_writer:
         temp_config.write(config_writer)
 
 def init_config_file():
     ''' Initizalize the config file in the same directory'''
 
-    check_file_exists(file_praw_ini, "The config file praw.ini is missing")
+    check_file_exists(Asset.file_praw_ini, "The config file praw.ini is missing")
 
     # Dynamically create user agent and modify to current INI file
     app_user_agent = create_user_agent()
@@ -143,18 +122,18 @@ def init_config_file():
 
     global config
     config = configparser.ConfigParser()
-    config.read(file_praw_ini)
+    config.read(Asset.file_praw_ini)
 
     # Check that defailt user agent is not in INI file, quit if it is
     if config['DEFAULT']['user_agent'] == '[USER_AGENT]':
         print('Failed to update INI with user_agent')
-        sys.exit(ERROR_FILE_UPDATE)
+        sys.exit(Error.FILE_UPDATE)
 
 def check_file_exists(path, error_msg):
     ''' Check if file exists, if not then quit application '''
     if not os.path.exists(path):
         print(error_msg)
-        sys.exit(ERROR_FILE_MISSING)
+        sys.exit(Error.FILE_MISSING)
 
 def get_docs_from_collection(list_name):
     ''' Get the doc collection from a collection '''
@@ -188,8 +167,8 @@ def add_to_idea_list(newIdea):
 def load_ideas_internal():
     ''' Open the Ideas Database and fill idea stucture '''
 
-    check_file_exists(file_ideas_csv, 'Ideas csv is missing')
-    with open(file_ideas_csv) as csvfile:
+    check_file_exists(Asset.file_ideas_csv, 'Ideas csv is missing')
+    with open(Asset.file_ideas_csv) as csvfile:
         reader = csv.reader(csvfile, delimiter=',', skipinitialspace=True)
         for index, row in enumerate(reader):
             if index == 0:
@@ -197,7 +176,7 @@ def load_ideas_internal():
             add_to_idea_list(row)
 
 def load_ideas_mongodb():
-    docs = get_docs_from_collection(coll_ideas_mongo)
+    docs = get_docs_from_collection(Asset.coll_ideas_mongo)
     for doc in docs:
         idea = [
             doc['name'],
@@ -220,14 +199,14 @@ def init_ideas():
 def load_suggestion_words_internal():
     ''' Open the suggestion words database and fill list '''
 
-    check_file_exists(file_suggestion_words, 'Suggestion text file is missing')
-    with open(file_suggestion_words, 'r') as reader:
+    check_file_exists(Asset.file_suggestion_words, 'Suggestion text file is missing')
+    with open(Asset.file_suggestion_words, 'r') as reader:
         global idea_query_words
         idea_query_words = reader.read().split()
 
 def load_suggestion_words_mongo():
     ''' Get the suggestion words from mongodb '''
-    suggestions = get_list_from_collection(coll_suggestion_mongo)
+    suggestions = get_list_from_collection(Asset.coll_suggestion_mongo)
 
     global idea_query_words
     idea_query_words = suggestions
@@ -246,15 +225,15 @@ def init_suggestion_words():
 def load_rejection_words_default():
     ''' Opne the rejection words database and fill list '''
 
-    check_file_exists(file_rejection_words, 'Rejection text file is missing')
-    with open(file_rejection_words, 'r') as reader:
+    check_file_exists(Asset.file_rejection_words, 'Rejection text file is missing')
+    with open(Asset.file_rejection_words, 'r') as reader:
         global active_rejection_words
         active_rejection_words = reader.read().split()
 
 def load_rejection_words_mongo():
     ''' Get the rejection words from mongodb '''
 
-    rejections = get_list_from_collection(coll_rejection_mongo)
+    rejections = get_list_from_collection(Asset.coll_rejection_mongo)
 
     global active_rejection_words
     active_rejection_words = rejections
@@ -359,8 +338,8 @@ def process_title(title):
     total_words = len(words)
 
     # Confirm Word length is met
-    if total_words < MIN_NUM_WORDS_IN_TITLE:
-        errors.append(f'Minimum number of words {MIN_NUM_WORDS_IN_TITLE} not met with {total_words} words')
+    if total_words < Const.MIN_NUM_WORDS_IN_TITLE:
+        errors.append(f'Minimum number of words {Const.MIN_NUM_WORDS_IN_TITLE} not met with {total_words} words')
 
     # Process each work
     for word in words:
@@ -371,7 +350,7 @@ def process_title(title):
 
     # Calculate ratio
     ratio = float(count / total_words)
-    if ratio < ACCEPTABLE_RATIO:
+    if ratio < Const.ACCEPTABLE_RATIO:
         errors.append(f'Minimum ratio is not met')
 
     # Append label to error message to get total number errors
@@ -651,29 +630,29 @@ def reply_submission_with_idea(submission, idea):
 def stream_subreddits(reddit):
     ''' Blocking method to continuously check all 'subreddits_to_scan' for new posts '''
     query = '+'.join(subreddits_to_scan)
-    print('Post Query:', query, '\n\n----------------')
+    print('Starting Submission Stream - Post Query:', query)
     subreddits = reddit.subreddit(query)
     for submission in subreddits.stream.submissions():
         project_requested = submission_has_project_request(submission)
         if project_requested:
             success = respond_with_basic_response(submission)
             if not success:
-                print('Failed to respond to post, trying again in', RATE_LIMIT_SLEEP_TIME, 'seconds')
-                time.sleep(RATE_LIMIT_SLEEP_TIME + 5)
+                print('Failed to respond to post, trying again in', Const.RATE_LIMIT_SLEEP_TIME, 'seconds')
+                time.sleep(Const.RATE_LIMIT_SLEEP_TIME + 5)
                 respond_with_basic_response(submission)
 
 def stream_subreddits_comments(reddit):
     ''' Blocking method to continuously check all 'subreddits_to_scan' for new comments '''
     query = '+'.join(subreddits_to_scan)
-    print('Comment Query:', query, '\n\n----------------')
+    print('Starting Comment Stream - Comment Query:', query)
     subreddits = reddit.subreddit(query)
     for comment in subreddits.stream.comments():
         project_requested, difficulty = comment_has_project_request(comment)
         if project_requested:
             success = get_idea_and_respond_comment(comment, difficulty)
             if not success:
-                print('Failed to respond to comment, trying again in', RATE_LIMIT_SLEEP_TIME, 'seconds')
-                time.sleep(RATE_LIMIT_SLEEP_TIME + 5)
+                print('Failed to respond to comment, trying again in', Const.RATE_LIMIT_SLEEP_TIME, 'seconds')
+                time.sleep(Const.RATE_LIMIT_SLEEP_TIME + 5)
                 get_idea_and_respond_comment(comment, difficulty)
 
 def run():
@@ -710,7 +689,7 @@ def start():
 
     action = sys.argv[1].lower()
     if action == 'run': 
-        if len(sys.argv) > MIN_NUM_ARGS:
+        if len(sys.argv) > Const.MIN_NUM_ARGS:
             run()
         else:
             print('Too many arguments to run normal operation')
@@ -775,7 +754,7 @@ def main():
 
     try:
         # Determine type of runtime
-        if num_args >= MIN_NUM_ARGS:
+        if num_args >= Const.MIN_NUM_ARGS:
             start()
         else:
             print(f'Unexpected usage with {num_args} args')
