@@ -9,14 +9,14 @@ import sys
 import csv
 import math
 import time
-import praw
 import random
 import threading
-import configparser
 from pymongo import MongoClient
 from projectbot.Constants import *
 from projectbot.Internals import *
 from projectbot.Utilities import *
+from projectbot.Configuration import *
+from projectbot.RedditActions import *
 
 config = None
 app : BotInternals = None
@@ -43,19 +43,6 @@ class ThreadCommentChecker(threading.Thread):
         threading.Thread.run(self)
         stream_subreddits_comments(self.reddit)
 
-def audit_app_level():
-    ''' Audit the app level and configure settings on it '''
-    level = os.environ.get('app_level')
-
-    # Change subreddits to scan
-    global subreddits_to_scan
-    if level == 'production':
-        subreddits_to_scan = Const.SUBREDDITS_TO_SCAN_PROD
-    elif level == 'staging':
-        subreddits_to_scan = Const.SUBREDDITS_TO_SCAN_STAG
-    else:
-        subreddits_to_scan = Const.SUBREDDITS_TO_SCAN_STAG
-
 def init_reddit_client():
     ''' Initialize an instance of the PRAW reddit client using the assumed praw.ini in the same directory '''
     reddit = praw.Reddit()
@@ -67,39 +54,19 @@ def init_reddit_client():
 
     return reddit
 
-def add_user_agent_to_ini(new_user_agent):
-    ''' Put new user agent text into the ini file '''
-
-    temp_config = configparser.ConfigParser()
-    temp_config.read(Asset.file_praw_ini)
-    temp_config['DEFAULT']['user_agent'] = new_user_agent
-
-    with open(Asset.file_praw_ini, 'w') as config_writer:
-        temp_config.write(config_writer)
-
 def init_config_file():
     ''' Initizalize the config file in the same directory'''
-
-    check_file_exists(Asset.file_praw_ini, "The config file praw.ini is missing")
 
     # Dynamically create user agent and modify to current INI file
     app_user_agent = create_user_agent()
     add_user_agent_to_ini(app_user_agent)
 
-    global config
-    config = configparser.ConfigParser()
-    config.read(Asset.file_praw_ini)
-
-    # Check that defailt user agent is not in INI file, quit if it is
-    if config['DEFAULT']['user_agent'] == '[USER_AGENT]':
-        print('Failed to update INI with user_agent')
-        sys.exit(Error.FILE_UPDATE)
 
 def get_docs_from_collection(list_name):
     ''' Get the doc collection from a collection '''
-    dbname = config['DEFAULT']['username']
-    username = config['DEFAULT']['mongo_username']
-    password = config['DEFAULT']['mongo_password']
+    dbname = app.config['username']
+    username = app.config['mongo_username']
+    password = app.config['mongo_password']
 
     client = MongoClient(f'mongodb+srv://{username}:{password}@cluster0.5398r.mongodb.net/{dbname}?retryWrites=true&w=majority')
     database = client.get_database(dbname)
@@ -238,7 +205,7 @@ def process_comment(content):
 
     # Acceptable phrases to trigger the bot
     phrases = []
-    phrases.append('u/' + config['DEFAULT']['username'])
+    phrases.append('u/' + app.config['username'])
     phrases.append('!projectbot')
 
     # Put to lowercase and remove extras
@@ -305,7 +272,7 @@ def process_title(title):
 def comment_already_has_bot_response(comment):
     ''' Determine if comment already contains the bot''s response'''
 
-    username = config['DEFAULT']['username']
+    username = app.config['username']
 
     # This is potentially intensive if calling for every comment
     # Inititally the replies list is empty unless this is called
@@ -319,7 +286,7 @@ def comment_already_has_bot_response(comment):
 def submission_contains_bot_response(submission):
     ''' Determine if the submission contains the bot post already '''
 
-    username = config['DEFAULT']['username']
+    username = app.config['username']
 
     for comment in submission.comments:
         if comment.author == username:
@@ -329,7 +296,7 @@ def submission_contains_bot_response(submission):
 def comment_is_made_by_bot(comment):
     ''' Determine if the comment is the bot itself '''
 
-    username = config['DEFAULT']['username']
+    username = app.config['username']
     if comment.author == username:
         return True
 
@@ -408,7 +375,7 @@ def get_random(ideas, desired_difficulty='all'):
 def get_bot_reference_text():
     ''' Format the text response for bot disclaimer '''
 
-    repo_url = config['DEFAULT']['repo_url']
+    repo_url = app.config['repo_url']
 
     response = ''
     response += f'^(I am a bot, so give praises if I was helpful or curses if I was not.)\n'
@@ -480,16 +447,6 @@ def prompt_for_confirmation():
         return option
     else:
         exit(1)
-
-def reddit_send_comment_response(comment, response):
-    new_comment = comment.reply(response)
-    if new_comment == None:
-        print('[Error]: Failed to post new comment')
-
-def reddit_send_submission_response(submission, response):
-    new_comment = submission.reply(response)
-    if new_comment == None:
-        print("[Error]: Failed to post new comment")
 
 def respond_with_basic_response(submission):
     ''' Reply with the basic response to give resources to a user'''
@@ -563,7 +520,7 @@ def reply_submission_with_idea(submission, idea):
 
 def stream_subreddits(reddit):
     ''' Blocking method to continuously check all 'subreddits_to_scan' for new posts '''
-    query = '+'.join(subreddits_to_scan)
+    query = '+'.join(app.subreddits_to_scan)
     print('Starting Submission Stream - Post Query:', query)
     subreddits = reddit.subreddit(query)
     for submission in subreddits.stream.submissions():
@@ -577,7 +534,7 @@ def stream_subreddits(reddit):
 
 def stream_subreddits_comments(reddit):
     ''' Blocking method to continuously check all 'subreddits_to_scan' for new comments '''
-    query = '+'.join(subreddits_to_scan)
+    query = '+'.join(app.subreddits_to_scan)
     print('Starting Comment Stream - Comment Query:', query)
     subreddits = reddit.subreddit(query)
     for comment in subreddits.stream.comments():
@@ -643,7 +600,7 @@ def start():
         run()
     elif action == 'ver':
         init_config_file()
-        c = config['DEFAULT']
+        c = app.config['DEFAULT']
         print(c['version'])
     elif action == 'help':
         output = get_help()
@@ -656,9 +613,6 @@ def main():
     
     # Remove one args, first one is name of bot
     num_args = len(sys.argv) - 1
-
-    # Differ settings based on app_level
-    audit_app_level()
 
     try:
         # Determine type of runtime

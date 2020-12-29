@@ -1,9 +1,12 @@
 import os
 import sys
 import praw
+from Configuration import *
 
 class BotInternals:
     def __init__(self):
+
+        self.config : Configuration = Configuration()
 
         self.SIMULATE = False
         self.SIMULATE_WAIT_TO_CONFIRM = False
@@ -18,7 +21,12 @@ class BotInternals:
             'medium': [],
             'hard': [],
         }
-        print('Initialized BotInternal')
+
+        # Set app level
+        level = get_app_level()
+        self.set_app_level(level)
+
+        print('Initialized BotInternal', level)
 
     def set_app_level(self, level):
         from Constants import Const
