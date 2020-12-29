@@ -23,36 +23,23 @@ app : BotInternals = None
 
 class ThreadPostChecker(threading.Thread):
     ''' This thread will check the posts on all queried subreddits '''
-    def __init__(self, name, reddit):
+    def __init__(self, name):
         threading.Thread.__init__(self)
         self.name = name
-        self.reddit = reddit
 
     def run(self):
         threading.Thread.run(self)
-        stream_subreddits(self.reddit)
+        stream_subreddits()
 
 class ThreadCommentChecker(threading.Thread):
     ''' This thread will check the comments on all queried subreddits '''
-    def __init__(self, name, reddit):
+    def __init__(self, name):
         threading.Thread.__init__(self)
         self.name = name
-        self.reddit = reddit
 
     def run(self):
         threading.Thread.run(self)
-        stream_subreddits_comments(self.reddit)
-
-def init_reddit_client():
-    ''' Initialize an instance of the PRAW reddit client using the assumed praw.ini in the same directory '''
-    reddit = praw.Reddit()
-    try:
-        reddit.user.me()
-    except:
-        print('Failed to log into bot')
-        exit(Error.LOGIN_FAILED)
-
-    return reddit
+        stream_subreddits_comments()
 
 def init_config_file():
     ''' Initizalize the config file in the same directory'''
@@ -121,15 +108,12 @@ def load_suggestion_words_internal():
 
     check_file_exists(Asset.file_suggestion_words, 'Suggestion text file is missing')
     with open(Asset.file_suggestion_words, 'r') as reader:
-        global idea_query_words
-        idea_query_words = reader.read().split()
+        app.idea_query_words = reader.read().split()
 
 def load_suggestion_words_mongo():
     ''' Get the suggestion words from mongodb '''
     suggestions = get_list_from_collection(Asset.coll_suggestion_mongo)
-
-    global idea_query_words
-    idea_query_words = suggestions
+    app.idea_query_words = suggestions
 
 def init_suggestion_words():
     ''' Loads the suggestion words from external DB '''
@@ -147,16 +131,13 @@ def load_rejection_words_default():
 
     check_file_exists(Asset.file_rejection_words, 'Rejection text file is missing')
     with open(Asset.file_rejection_words, 'r') as reader:
-        global active_rejection_words
-        active_rejection_words = reader.read().split()
+        app.active_rejection_words = reader.read().split()
 
 def load_rejection_words_mongo():
     ''' Get the rejection words from mongodb '''
 
     rejections = get_list_from_collection(Asset.coll_rejection_mongo)
-
-    global active_rejection_words
-    active_rejection_words = rejections
+    app.active_rejection_words = rejections
 
 def init_rejection_words():
     ''' Loads the rejectin words from external DB '''
@@ -180,16 +161,11 @@ def initialize():
 
     # Import suggestion words
     init_suggestion_words()
-    print('Read:', len(idea_query_words), 'suggestion entries')
+    print('Read:', len(app.idea_query_words), 'suggestion entries')
 
     # Import rejection words
     init_rejection_words()
-    print('Read:', len(active_rejection_words), 'rejction entries')
-
-    # Initialize the reddit client
-    reddit = init_reddit_client()
-
-    return reddit
+    print('Read:', len(app.active_rejection_words), 'rejction entries')
 
 def process_comment(content):
     '''
@@ -253,9 +229,9 @@ def process_title(title):
 
     # Process each work
     for word in words:
-        if word in active_rejection_words:
+        if word in app.active_rejection_words:
             errors.append(f'Rejecting ({word}): {title}')
-        if word in idea_query_words:
+        if word in app.idea_query_words:
             count += 1
 
     # Calculate ratio
@@ -458,9 +434,9 @@ def respond_with_basic_response(submission):
             if app.SIMULATE_WAIT_TO_CONFIRM:
                 option = prompt_for_confirmation()
                 if option == 'p':
-                    reddit_send_submission_response(submission, response)
+                    app.reddit.send_submission_response(submission, response)
         else:
-            reddit_send_submission_response(submission, response)
+            app.reddit.send_submission_response(submission, response)
         return True
     except praw.exceptions.RedditAPIException as e:
         print(e)
@@ -492,9 +468,9 @@ def reply_comment_with_idea(comment, idea):
             if app.SIMULATE_WAIT_TO_CONFIRM:
                 option = prompt_for_confirmation()
                 if option == 'p':
-                    reddit_send_comment_response(comment, response)
+                    app.reddit.send_comment_response(comment, response)
         else:
-            reddit_send_comment_response(comment, response)
+            app.reddit.send_comment_response(comment, response)
         return True
     except praw.exceptions.RedditAPIException as e:
         print(e)
@@ -510,19 +486,19 @@ def reply_submission_with_idea(submission, idea):
             if app.SIMULATE_WAIT_TO_CONFIRM:
                 option = prompt_for_confirmation()
                 if option == 'p':
-                    reddit_send_submission_response(submission, response)
+                    app.reddit.send_submission_response(submission, response)
         else:
-            reddit_send_submission_response(submission, response)
+            app.reddit.send_submission_response(submission, response)
         return True
     except praw.exceptions.RedditAPIException as e:
         print(e)
         return False
 
-def stream_subreddits(reddit):
+def stream_subreddits():
     ''' Blocking method to continuously check all 'subreddits_to_scan' for new posts '''
     query = '+'.join(app.subreddits_to_scan)
     print('Starting Submission Stream - Post Query:', query)
-    subreddits = reddit.subreddit(query)
+    subreddits = app.reddit.query_subreddit(query)
     for submission in subreddits.stream.submissions():
         project_requested = submission_has_project_request(submission)
         if project_requested:
@@ -532,11 +508,11 @@ def stream_subreddits(reddit):
                 time.sleep(Const.RATE_LIMIT_SLEEP_TIME + 5)
                 respond_with_basic_response(submission)
 
-def stream_subreddits_comments(reddit):
+def stream_subreddits_comments():
     ''' Blocking method to continuously check all 'subreddits_to_scan' for new comments '''
     query = '+'.join(app.subreddits_to_scan)
     print('Starting Comment Stream - Comment Query:', query)
-    subreddits = reddit.subreddit(query)
+    subreddits = app.reddit.query_subreddit(query)
     for comment in subreddits.stream.comments():
         project_requested, difficulty = comment_has_project_request(comment)
         if project_requested:
@@ -548,13 +524,11 @@ def stream_subreddits_comments(reddit):
 
 def run():
     ''' Run the main purpose application '''
-    reddit = initialize()
-
     threads = []
-    thread_post_checker = ThreadPostChecker('Post Checker', reddit)
+    thread_post_checker = ThreadPostChecker('Post Checker')
     threads.append(thread_post_checker)
 
-    thread_comment_checker = ThreadCommentChecker('Comment Stream Checker', reddit)
+    thread_comment_checker = ThreadCommentChecker('Comment Stream Checker')
     threads.append(thread_comment_checker)
 
     # Start all threads

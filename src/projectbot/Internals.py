@@ -2,10 +2,12 @@ import os
 import sys
 import praw
 from Configuration import *
+from RedditActions import *
 
 class BotInternals:
     def __init__(self):
 
+        self.reddit : RedditInterface = RedditInterface()
         self.config : Configuration = Configuration()
 
         self.SIMULATE = False
