@@ -6,18 +6,15 @@
 
 import os
 import sys
-import csv
 import math
 import random
 import threading
-from pymongo import MongoClient
 from projectbot.Constants import *
 from projectbot.Internals import *
 from projectbot.Utilities import *
 from projectbot.Configuration import *
 from projectbot.RedditActions import *
 
-config = None
 app : BotInternals = None
 
 class ThreadPostChecker(threading.Thread):
@@ -40,131 +37,6 @@ class ThreadCommentChecker(threading.Thread):
         threading.Thread.run(self)
         stream_subreddits_comments()
 
-def init_config_file():
-    ''' Initizalize the config file in the same directory'''
-
-    # Dynamically create user agent and modify to current INI file
-    app_user_agent = create_user_agent()
-    add_user_agent_to_ini(app_user_agent)
-
-
-def get_docs_from_collection(list_name):
-    ''' Get the doc collection from a collection '''
-    dbname = app.config['username']
-    username = app.config['mongo_username']
-    password = app.config['mongo_password']
-
-    client = MongoClient(f'mongodb+srv://{username}:{password}@cluster0.5398r.mongodb.net/{dbname}?retryWrites=true&w=majority')
-    database = client.get_database(dbname)
-    collection = database.get_collection(list_name)
-
-    docs = collection.find({})
-    return docs
-
-def get_list_from_collection(list_name):
-    ''' Get a list of terms from a collection '''
-    all = []
-    docs = get_docs_from_collection(list_name)
-    for doc in docs:
-        all.append(doc['term'])
-
-    return all
-
-def load_ideas_internal():
-    ''' Open the Ideas Database and fill idea stucture '''
-
-    check_file_exists(Asset.file_ideas_csv, 'Ideas csv is missing')
-    with open(Asset.file_ideas_csv) as csvfile:
-        reader = csv.reader(csvfile, delimiter=',', skipinitialspace=True)
-        for index, row in enumerate(reader):
-            if index == 0:
-                continue
-            app.add_to_idea_list(row)
-
-def load_ideas_mongodb():
-    docs = get_docs_from_collection(Asset.coll_ideas_mongo)
-    for doc in docs:
-        idea = [
-            doc['name'],
-            doc['difficulty'],
-            doc['description']
-        ]
-        app.add_to_idea_list(idea)
-
-def init_ideas():
-    ''' Loads the ideas from external DB '''
-
-    try:
-        load_ideas_mongodb()
-        print('Loaded ideas from mongo')
-    except Exception as e:
-        print('[Error]:', e)
-        load_ideas_internal()
-        print('Loaded ideas from internal')
-
-def load_suggestion_words_internal():
-    ''' Open the suggestion words database and fill list '''
-
-    check_file_exists(Asset.file_suggestion_words, 'Suggestion text file is missing')
-    with open(Asset.file_suggestion_words, 'r') as reader:
-        app.idea_query_words = reader.read().split()
-
-def load_suggestion_words_mongo():
-    ''' Get the suggestion words from mongodb '''
-    suggestions = get_list_from_collection(Asset.coll_suggestion_mongo)
-    app.idea_query_words = suggestions
-
-def init_suggestion_words():
-    ''' Loads the suggestion words from external DB '''
-    try:
-        load_suggestion_words_mongo()
-        print('Loaded suggestions from mongo')
-    except Exception as e:
-        print('[Error]:', e)
-        load_suggestion_words_internal()
-        print('Loaded suggestions from internal')
-        pass
-
-def load_rejection_words_default():
-    ''' Opne the rejection words database and fill list '''
-
-    check_file_exists(Asset.file_rejection_words, 'Rejection text file is missing')
-    with open(Asset.file_rejection_words, 'r') as reader:
-        app.active_rejection_words = reader.read().split()
-
-def load_rejection_words_mongo():
-    ''' Get the rejection words from mongodb '''
-
-    rejections = get_list_from_collection(Asset.coll_rejection_mongo)
-    app.active_rejection_words = rejections
-
-def init_rejection_words():
-    ''' Loads the rejectin words from external DB '''
-    try:
-        load_rejection_words_mongo()
-        print('Loaded rejections from mongo')
-    except Exception as e:
-        print('[Error]:', e)
-        load_rejection_words_default()
-        print('Loaded rejections from internal')
-
-def initialize():
-    ''' Initialize all things used for the application '''
-
-    # Read the configuration INI file
-    init_config_file()
-
-    # Import the ideas
-    init_ideas()
-    print('Read:', len(app.ideas['all']), 'idea entries')
-
-    # Import suggestion words
-    init_suggestion_words()
-    print('Read:', len(app.idea_query_words), 'suggestion entries')
-
-    # Import rejection words
-    init_rejection_words()
-    print('Read:', len(app.active_rejection_words), 'rejction entries')
 
 def process_comment(content):
     '''
@@ -413,7 +285,6 @@ def format_basic_response():
 
     return response
 
-
 def respond_with_basic_response(submission):
     ''' Reply with the basic response to give resources to a user'''
     print('Responding with basic response')
@@ -421,7 +292,7 @@ def respond_with_basic_response(submission):
     try:
         if app.config.SIMULATE:
             print('Would be output:\n', response)
-            if app.SIMULATE_WAIT_TO_CONFIRM:
+            if app.config.SIMULATE_WAIT_TO_CONFIRM:
                 option = prompt_for_confirmation()
                 if option == 'p':
                     app.reddit.send_submission_response(submission, response)
@@ -455,7 +326,7 @@ def reply_comment_with_idea(comment, idea):
     try:
         if app.config.SIMULATE:
             print('Would be output:\n', response)
-            if app.SIMULATE_WAIT_TO_CONFIRM:
+            if app.config.SIMULATE_WAIT_TO_CONFIRM:
                 option = prompt_for_confirmation()
                 if option == 'p':
                     app.reddit.send_comment_response(comment, response)
@@ -473,7 +344,7 @@ def reply_submission_with_idea(submission, idea):
     try:
         if app.config.SIMULATE:
             print('Would be output:\n', response)
-            if app.SIMULATE_WAIT_TO_CONFIRM:
+            if app.config.SIMULATE_WAIT_TO_CONFIRM:
                 option = prompt_for_confirmation()
                 if option == 'p':
                     app.reddit.send_submission_response(submission, response)
@@ -514,6 +385,8 @@ def stream_subreddits_comments():
 
 def run():
     ''' Run the main purpose application '''
+    app.initialize()
+
     threads = []
     thread_post_checker = ThreadPostChecker('Post Checker')
     threads.append(thread_post_checker)
@@ -532,8 +405,7 @@ def run():
 
 def test_phrase(phrase):
     ''' Test a specific phrase to see how the main application would interpret it '''
-    init_rejection_words()
-    init_suggestion_words()
+    app.initialize()
 
     # Process the phrase and report
     ratio, count, total, error = process_title(phrase)
@@ -557,15 +429,14 @@ def start():
 
         if len(sys.argv) >= 3:
             if sys.argv[2].lower() == 'confirm':
-                app.SIMULATE_WAIT_TO_CONFIRM = True
+                app.config.SIMULATE_WAIT_TO_CONFIRM = True
             else:
                 print('Unknown simulation argument:', sys.argv[2])
 
         run()
     elif action == 'ver':
-        init_config_file()
-        c = app.config['DEFAULT']
-        print(c['version'])
+        version = app.config['version']
+        print(version)
     elif action == 'help':
         output = get_help()
         print(output)

@@ -1,6 +1,6 @@
 import os
 import configparser
-from Utilities import *
+from Utilities import create_user_agent, check_file_exists
 from Constants import Const, Asset
 
 class Configuration:
@@ -11,6 +11,9 @@ class Configuration:
         self.SIMULATE_WAIT_TO_CONFIRM = False
 
         self.init_config_with_ini()
+
+        # Read the configuration INI file
+        self.init_config_file()
     
     def __getitem__(self, item):
         return self.config[item]
@@ -23,6 +26,13 @@ class Configuration:
         parser = configparser.ConfigParser()
         parser.read(Asset.file_praw_ini)
         self.config = parser['DEFAULT']
+    
+    def init_config_file(self):
+        ''' Initizalize the config file in the same directory'''
+
+        # Dynamically create user agent and modify to current INI file
+        app_user_agent = create_user_agent()
+        add_user_agent_to_ini(app_user_agent)
 
 def get_app_level():
     level = os.environ.get('app_level')
