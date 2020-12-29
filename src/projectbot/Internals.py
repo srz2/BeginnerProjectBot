@@ -10,9 +10,6 @@ class BotInternals:
         self.reddit : RedditInterface = RedditInterface()
         self.config : Configuration = Configuration()
 
-        self.SIMULATE = False
-        self.SIMULATE_WAIT_TO_CONFIRM = False
-
         self.subreddits_to_scan = []
 
         self.idea_query_words = []
@@ -43,13 +40,13 @@ class BotInternals:
 
     def turn_ON_simulation_mode(self):
         ''' Turn on the simulation flag '''
-        self.SIMULATE = True
+        self.config.SIMULATE = True
         print('Simulation mode turned: ON')
 
 
     def turn_OFF_simulation_mode(self):
         ''' Turn off the simulation flag '''
-        self.SIMULATE = False
+        self.config.SIMULATE = False
         print('Simulation mode turned: OFF')
 
     def add_to_idea_list(self, newIdea):

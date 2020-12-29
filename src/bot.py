@@ -8,7 +8,6 @@ import os
 import sys
 import csv
 import math
-import time
 import random
 import threading
 from pymongo import MongoClient
@@ -414,22 +413,13 @@ def format_basic_response():
 
     return response
 
-def prompt_for_confirmation():
-    option = input('Would you like to continue (Y/n/p):').lower()
-    if option == 'y' or option == '':
-        print('\n\n\n\n\n\n\n\n\n')
-        print(f'[{time.time()}]: Waiting for more posts...')
-    elif option == 'p':
-        return option
-    else:
-        exit(1)
 
 def respond_with_basic_response(submission):
     ''' Reply with the basic response to give resources to a user'''
     print('Responding with basic response')
     response = format_basic_response()
     try:
-        if app.SIMULATE:
+        if app.config.SIMULATE:
             print('Would be output:\n', response)
             if app.SIMULATE_WAIT_TO_CONFIRM:
                 option = prompt_for_confirmation()
@@ -463,7 +453,7 @@ def reply_comment_with_idea(comment, idea):
     print(f'Responding to comment({comment.permalink}) with idea:', idea[0])
     response = format_idea_response(idea)
     try:
-        if app.SIMULATE:
+        if app.config.SIMULATE:
             print('Would be output:\n', response)
             if app.SIMULATE_WAIT_TO_CONFIRM:
                 option = prompt_for_confirmation()
@@ -481,7 +471,7 @@ def reply_submission_with_idea(submission, idea):
     print('Responding to post with idea:', idea[0])
     response = format_idea_response(idea)
     try:
-        if app.SIMULATE:
+        if app.config.SIMULATE:
             print('Would be output:\n', response)
             if app.SIMULATE_WAIT_TO_CONFIRM:
                 option = prompt_for_confirmation()

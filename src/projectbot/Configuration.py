@@ -5,21 +5,29 @@ from Constants import Const, Asset
 
 class Configuration:
     def __init__(self):
-        exists = check_file_exists(Asset.file_praw_ini, "The config file praw.ini is missing")
-        if not exists:
-            raise Exception('Missing praw.ini')
-        
-        parser = configparser.ConfigParser()
-        parser.read(Asset.file_praw_ini)
-        self.config = parser['DEFAULT']
+
+        self.config = None
+        self.SIMULATE = False
+        self.SIMULATE_WAIT_TO_CONFIRM = False
+
+        self.init_config_with_ini()
     
     def __getitem__(self, item):
         return self.config[item]
 
+    def init_config_with_ini(self):
+        exists = check_file_exists(Asset.file_praw_ini, "The config file praw.ini is missing")
+        if not exists:
+            raise Exception('Missing praw.ini')
+
+        parser = configparser.ConfigParser()
+        parser.read(Asset.file_praw_ini)
+        self.config = parser['DEFAULT']
+
 def get_app_level():
     level = os.environ.get('app_level')
     if level is None:
-        level = Const.SUBREDDITS_TO_SCAN_STAG
+        level = Const.DEFAULT_APP_LEVEL
     return level
 
 

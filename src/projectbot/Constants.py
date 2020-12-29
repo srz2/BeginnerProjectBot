@@ -15,12 +15,15 @@ class Error:
     FILE_MISSING = 2
     LOGIN_FAILED = 3
     FILE_UPDATE = 4
+    USER_QUIT = 5
 
 class Const:
     MIN_NUM_ARGS = 1
     MIN_NUM_WORDS_IN_TITLE = 5
     ACCEPTABLE_RATIO = 0.25
     RATE_LIMIT_SLEEP_TIME = 600    # 10 minutes
+
+    DEFAULT_APP_LEVEL = 'staging'
 
     SUBREDDITS_TO_SCAN_PROD = ['learnpython']
     SUBREDDITS_TO_SCAN_STAG = ['SRZ2_TestEnvironment']

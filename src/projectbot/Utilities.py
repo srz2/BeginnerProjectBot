@@ -1,7 +1,8 @@
 import os
 import sys
+import time
 import configparser
-from Constants import Asset
+from Constants import Asset, Error
 
 
 def output_stats(title, count, total, ratio, error_msg):
@@ -71,3 +72,14 @@ def is_recongized_difficulty(dif):
         return True
     else:
         return False
+
+
+def prompt_for_confirmation():
+    option = input('Would you like to continue (Y/n/p):').lower()
+    if option == 'y' or option == '':
+        print('\n\n\n\n\n\n\n\n\n')
+        print(f'[{time.time()}]: Waiting for more posts...')
+    elif option == 'p':
+        return option
+    else:
+        exit(Error.USER_QUIT)
