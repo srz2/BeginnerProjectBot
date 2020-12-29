@@ -16,6 +16,7 @@ import configparser
 from pymongo import MongoClient
 from projectbot.Constants import *
 from projectbot.Internals import *
+from projectbot.Utilities import *
 
 config = None
 app : BotInternals = None
@@ -41,19 +42,6 @@ class ThreadCommentChecker(threading.Thread):
     def run(self):
         threading.Thread.run(self)
         stream_subreddits_comments(self.reddit)
-
-def create_user_agent():
-    ''' Create the user agent string '''
-
-    temp_config = configparser.ConfigParser()
-    temp_config.read(Asset.file_praw_ini)
-
-    c = temp_config['DEFAULT']
-    username = c['username']
-    version = c['version']
-    author = c['author']
-    user_agent = f'{username}:{version} (by {author})'
-    return user_agent
 
 def audit_app_level():
     ''' Audit the app level and configure settings on it '''
@@ -106,12 +94,6 @@ def init_config_file():
     if config['DEFAULT']['user_agent'] == '[USER_AGENT]':
         print('Failed to update INI with user_agent')
         sys.exit(Error.FILE_UPDATE)
-
-def check_file_exists(path, error_msg):
-    ''' Check if file exists, if not then quit application '''
-    if not os.path.exists(path):
-        print(error_msg)
-        sys.exit(Error.FILE_MISSING)
 
 def get_docs_from_collection(list_name):
     ''' Get the doc collection from a collection '''
@@ -242,16 +224,6 @@ def initialize():
 
     return reddit
 
-def is_recongized_difficulty(dif):
-    if dif is None:
-        return False
-
-    dif = dif.lower()
-    if dif in ['easy', 'medium', 'hard', 'all']:
-        return True
-    else:
-        return False
-
 def process_comment(content):
     '''
         Process the comment to determine if help is requested within the comment body
@@ -329,15 +301,6 @@ def process_title(title):
         errors.insert(0, f'{len(errors)} Errors')
 
     return ratio, count, total_words, '\n'.join(errors)
-
-def output_stats(title, count, total, ratio, error_msg):
-    ''' DEBUG: Used for outputting information '''
-    if error_msg == '':
-        status = 'Accepted'
-    else:
-        status = 'Rejected'
-
-    print(f'Title: {title}\nCount: {count}\nLenth: {total}\nRatio: {ratio}\nStatus: {status}\nError Message: {error_msg}\n-------------')
 
 def comment_already_has_bot_response(comment):
     ''' Determine if comment already contains the bot''s response'''
@@ -683,23 +646,10 @@ def start():
         c = config['DEFAULT']
         print(c['version'])
     elif action == 'help':
-        show_help()
+        output = get_help()
+        print(output)
     else:
         print('Unknown test argument:', action)
-
-def show_help():
-    output = ''
-
-    output += f'Usage: python3 bot.py [action] <args...>\n'
-    output += f'    action: All possible actions which can be added to bot\n'
-    output += f'        run: Run the default application of the bot\n'
-    output += f'        test: Test a specific phrase to determine how the bot interprets it. It does not run the main application\n'
-    output += f'            phrase: Add this following the test action\n'
-    output += f'        sim: Set the bot to simulation mode where it does not post to reddit\n'
-    output += f'            confirm: Add this following the test action\n'
-    output += f'        help: Show help/usage output\n'
-
-    print(output)
 
 def main():
     ''' Main method to fire up the application based on command args '''
@@ -716,7 +666,8 @@ def main():
             start()
         else:
             print(f'Unexpected usage with {num_args} args')
-            show_help()
+            output = get_help()
+            print(output)
     except KeyboardInterrupt:
         print('')
 
