@@ -2,6 +2,8 @@ import os
 import sys
 import csv
 import praw
+import random
+from Utilities import is_recongized_difficulty
 from Configuration import *
 from RedditActions import *
 from Database import *
@@ -196,3 +198,27 @@ class BotInternals:
         # Import rejection words
         self.active_rejection_words = self.get_rejection_words()
         print('Read:', len(self.active_rejection_words), 'rejction entries')
+
+    def get_random_idea(self, ideas, desired_difficulty='all'):
+        '''
+        Get a random idea from the list
+
+        Argument:
+            ideas (list<csvrow>): The list of ideas parsed from database
+            desired_difficulty (string): The default difficulty. Defaults to all.
+
+        Returns:
+            idea (csvrow): A random idea
+        '''
+
+        # Check ideas is filled
+        if len(ideas['all']) == 0:
+            return None
+
+        if is_recongized_difficulty(desired_difficulty):
+            tmp_ideas = ideas[desired_difficulty]
+        else:
+            tmp_ideas = ideas['all']
+
+        num = random.randrange(0, len(tmp_ideas))
+        return tmp_ideas[num]

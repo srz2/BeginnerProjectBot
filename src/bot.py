@@ -7,7 +7,6 @@
 import os
 import sys
 import math
-import random
 import threading
 from projectbot.Constants import *
 from projectbot.Internals import *
@@ -195,30 +194,6 @@ def comment_has_project_request(comment):
     
     return has_project_request, difficulty
 
-def get_random(ideas, desired_difficulty='all'):
-    '''
-    Get a random idea from the list
-
-    Argument:
-        ideas (list<csvrow>): The list of ideas parsed from database
-        desired_difficulty (string): The default difficulty. Defaults to all.
-
-    Returns:
-        idea (csvrow): A random idea
-    '''
-
-    # Check ideas is filled
-    if len(ideas['all']) == 0:
-        return None
-
-    if is_recongized_difficulty(desired_difficulty):
-        tmp_ideas = ideas[desired_difficulty]
-    else:
-        tmp_ideas = ideas['all']
-
-    num = random.randrange(0, len(tmp_ideas))
-    return tmp_ideas[num]
-
 def respond_with_basic_response(submission):
     ''' Reply with the basic response to give resources to a user'''
     print('Responding with basic response')
@@ -239,13 +214,13 @@ def respond_with_basic_response(submission):
 
 def get_idea_and_respond_comment(comment, difficulty='all'):
     ''' Randomly get an idea and reply to the submission with it '''
-    idea = get_random(app.ideas, difficulty)
+    idea = app.get_random_idea(app.ideas, difficulty)
     success = reply_comment_with_idea(comment, idea)
     return success
 
 def get_idea_and_respond_submission(submission, diffculty='all'):
     ''' Randomly get an idea and reply to the submission with it '''
-    idea = get_random(app.ideas, diffculty)
+    idea = app.get_random_idea(app.ideas, diffculty)
     success = reply_submission_with_idea(submission, idea)
     return success
 
