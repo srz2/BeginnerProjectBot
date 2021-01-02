@@ -7,6 +7,7 @@ from projectbot.Utilities import is_recongized_difficulty
 from projectbot.Configuration import Configuration, Asset, get_app_level, check_file_exists
 from projectbot.RedditActions import RedditInterface
 from projectbot.Database import Database
+from projectbot.Constants import Const
 
 class BotInternals:
     def __init__(self):
@@ -36,7 +37,6 @@ class BotInternals:
                             self.config['username'])
 
     def set_app_level(self, level):
-        from Constants import Const
 
         # Change subreddits to scan
         if level == 'production':
