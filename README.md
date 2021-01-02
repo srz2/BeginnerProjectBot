@@ -43,6 +43,23 @@ Usage: python3 bot.py [action] <args...>
 ## Configuration
 The bot has options for configuration, including its Reddit Settings via a PRAW.INI file. This will hold everything from the secret key to the version number
 
+An example INI file is in the repo as `praw.ini.example`. The script `scripts/create-init.py` uses the environment variables to fille in the config file
+
+Name | Environment Variable | Required For Which Aspect | Description
+-----|----------------------|---------------------------|------------
+client_id | REDDIT_CLIENT_ID | Reddit Praw | The client ID to access a reddit application
+client_secret | REDDIT_CLIENT_SECRET | Reddit Praw | The client secret to access a reddit application
+user_agent | Dynamically created in bot | Reddit Praw | The HTTP user agent required for PRAW, made of the username, version, and author fields
+username | REDDIT_USERNAME | Reddit | The username of the account
+password | REDDIT_PASSWORD | Reddit | The password of the account
+mongo_username | MONGO_USERNAME | MongoDB | The mongodb username
+mango_password | MONGO_PASSWORD | MongoDB | The mongodb password
+mongo_database | MONGO_DATABASE | MongoDB | The mongodb database name
+version | Hardcoded from example INI | Bot | The version of the bot
+author | Hardcoded from example INI | Bot | The creator/implementation of the bot
+repo_url | Hardcoded from example INI | Bot | The GitHub repo URL
+
+
 ## Contributing
 Anyone can contribute to this bot's source code or otherwise. Feel free to fork and submit a pull request. Or if you simple want to raise an issue, simply do so in the issues field
 
