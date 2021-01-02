@@ -88,7 +88,7 @@ def process_title(title):
     errors = []
 
     # Put to lowercase and remove extras
-    title = title.lower().replace("?", "").replace("!", "").replace(".", "").replace(",", "").replace("/", " ").replace("[", "").replace("]", "")
+    title = title.lower().replace("?", "").replace("!", "").replace(".", "").replace(",", "").replace("/", " ").replace("[", "").replace("]", "").replace("]", "").replace(":", "")
     words = list(dict.fromkeys(title.split()).keys())
 
     count = 0
