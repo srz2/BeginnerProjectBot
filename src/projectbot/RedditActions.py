@@ -1,5 +1,5 @@
 import praw
-from Constants import Error
+from projectbot.Constants import Error
 
 class RedditInterface:
     def __init__(self):

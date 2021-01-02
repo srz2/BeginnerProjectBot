@@ -1,7 +1,7 @@
 import os
 import configparser
-from Utilities import create_user_agent, check_file_exists
-from Constants import Const, Asset
+from projectbot.Utilities import create_user_agent, check_file_exists
+from projectbot.Constants import Const, Asset
 
 class Configuration:
     def __init__(self):

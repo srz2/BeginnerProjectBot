@@ -3,10 +3,10 @@ import sys
 import csv
 import praw
 import random
-from Utilities import is_recongized_difficulty
-from Configuration import *
-from RedditActions import *
-from Database import *
+from projectbot.Utilities import is_recongized_difficulty
+from projectbot.Configuration import Configuration, Asset, get_app_level, check_file_exists
+from projectbot.RedditActions import RedditInterface
+from projectbot.Database import Database
 
 class BotInternals:
     def __init__(self):
