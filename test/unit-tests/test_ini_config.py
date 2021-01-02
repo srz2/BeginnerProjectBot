@@ -1,9 +1,7 @@
 from os import path, remove
-from shutil import copy
 import configparser
 import unittest
 from projectbot.Configuration import Configuration
-
 
 class FileINIConfigured(unittest.TestCase):
     @classmethod
