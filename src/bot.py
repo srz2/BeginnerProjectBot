@@ -8,11 +8,12 @@ import os
 import sys
 import math
 import threading
-from projectbot.Constants import *
-from projectbot.Internals import *
-from projectbot.Utilities import *
-from projectbot.Configuration import *
-from projectbot.RedditActions import *
+from praw.exceptions import RedditAPIException
+from projectbot.Constants import Const
+from projectbot.Internals import BotInternals
+from projectbot.Utilities import ResponseFormatter, output_stats, get_help, check_file_exists, is_recongized_difficulty, prompt_for_confirmation, time
+from projectbot.Configuration import Configuration
+from projectbot.RedditActions import RedditInterface
 
 app : BotInternals = None
 formatter : ResponseFormatter = None
@@ -208,7 +209,7 @@ def respond_with_basic_response(submission):
         else:
             app.reddit.send_submission_response(submission, response)
         return True
-    except praw.exceptions.RedditAPIException as e:
+    except RedditAPIException as e:
         print(e)
         return False
 
@@ -242,7 +243,7 @@ def reply_comment_with_idea(comment, idea):
         else:
             app.reddit.send_comment_response(comment, response)
         return True
-    except praw.exceptions.RedditAPIException as e:
+    except RedditAPIException as e:
         print(e)
         return False
 
@@ -260,7 +261,7 @@ def reply_submission_with_idea(submission, idea):
         else:
             app.reddit.send_submission_response(submission, response)
         return True
-    except praw.exceptions.RedditAPIException as e:
+    except RedditAPIException as e:
         print(e)
         return False
 

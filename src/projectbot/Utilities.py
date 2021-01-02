@@ -2,7 +2,7 @@ import os
 import sys
 import time
 import configparser
-from Constants import Asset, Error
+from projectbot.Constants import Asset, Error
 
 class ResponseFormatter:
     def __init__(self, repo_url):
