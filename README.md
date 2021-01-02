@@ -43,7 +43,7 @@ Usage: python3 bot.py [action] <args...>
 ## Configuration
 The bot has options for configuration, including its Reddit Settings via a PRAW.INI file. This will hold everything from the secret key to the version number
 
-An example INI file is in the repo as `praw.ini.example`. The script `scripts/create-init.py` uses the environment variables to fille in the config file
+An example INI file is in the repo as `praw.ini.example`. The script `scripts/create-init.py` uses the environment variables to fill in the config file
 
 Name | Environment Variable | Required For Which Aspect | Description
 -----|----------------------|---------------------------|------------
