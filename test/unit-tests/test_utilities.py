@@ -1,5 +1,5 @@
 import unittest
-from src.bot import is_recongized_difficulty, create_link_reference
+from projectbot.Utilities import is_recongized_difficulty
 
 class ReconigzedDifficulty(unittest.TestCase):
     def test_recnogized_difficulty_all(self):
