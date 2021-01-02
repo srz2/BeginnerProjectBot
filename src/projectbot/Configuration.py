@@ -10,11 +10,11 @@ class Configuration:
         self.SIMULATE = False
         self.SIMULATE_WAIT_TO_CONFIRM = False
 
-        self.init_config_with_ini()
+        self.process_config_file()
 
         # Read the configuration INI file
-        self.init_config_file()
-    
+        self.init_config_with_ini()
+
     def __getitem__(self, item):
         return self.config[item]
 
@@ -27,7 +27,7 @@ class Configuration:
         parser.read(Asset.file_praw_ini)
         self.config = parser['DEFAULT']
     
-    def init_config_file(self):
+    def process_config_file(self):
         ''' Initizalize the config file in the same directory'''
 
         # Dynamically create user agent and modify to current INI file
