@@ -2,6 +2,8 @@ import unittest
 
 from projectbot.Utilities import is_recongized_difficulty, check_file_exists
 from projectbot.Utilities import ResponseFormatter
+import configparser
+from projectbot.Constants import Asset
 
 
 class ReconigzedDifficulty(unittest.TestCase):
@@ -42,10 +44,15 @@ class ReconigzedDifficulty(unittest.TestCase):
         self.assertTrue(is_recognized, 'Is not a reconigzed difficulty')
 class LinkFormatted(unittest.TestCase):
     def test_link_format(self):
-        url = ResponseFormatter('https://github.com/srz2/BeginnerProjectBot')
+        config = configparser.ConfigParser()
+        config.read(Asset.file_praw_ini)
+        url = ResponseFormatter(config['DEFAULT']['repo_url'])
         link = url.create_link_reference('Google','https://google.com/')
         self.assertEqual(link, '- [Google](https://google.com/)\n', 'Link not formatted')
 class FileExists(unittest.TestCase):
     def test_does_file_exist(self):
         file = check_file_exists('src/bot.py', 'Does not exist')
         self.assertTrue(file, "Method is broken!")
+    def test_does_file_not_exist(self):
+        file = check_file_exists(None)
+        self.assertFalse(file, 'Method always returns True!')
