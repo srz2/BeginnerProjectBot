@@ -1,7 +1,7 @@
 import unittest
 
-from src.projectbot.Utilities import is_recongized_difficulty, check_file_exists
-from src.projectbot.Utilities import ResponseFormatter
+from BeginnerProjectBot.src.projectbot.Utilities import is_recongized_difficulty, check_file_exists
+from BeginnerProjectBot.src.projectbot.Utilities import ResponseFormatter
 
 
 class ReconigzedDifficulty(unittest.TestCase):
