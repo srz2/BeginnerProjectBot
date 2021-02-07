@@ -42,10 +42,10 @@ class ReconigzedDifficulty(unittest.TestCase):
         self.assertTrue(is_recognized, 'Is not a reconigzed difficulty')
 class LinkFormatted(unittest.TestCase):
     def test_link_format(self):
-        url = ResponseFormatter()
+        url = ResponseFormatter('https://github.com/srz2/BeginnerProjectBot')
         link = url.create_link_reference('Google','https://www.google.com/')
         self.assertEqual(link, '- [Google][https://google.com]')
 class FileExists(unittest.TestCase):
     def test_does_file_exist(self):
-        file = check_file_exists('src/bot.py')
-        self.assertTrue(file, "File path does not exist")
+        file = check_file_exists('src/bot.py', 'Does not exist')
+        self.assertTrue(file, "Method is broken")
