@@ -48,4 +48,4 @@ class LinkFormatted(unittest.TestCase):
 class FileExists(unittest.TestCase):
     def test_does_file_exist(self):
         file = check_file_exists('src/bot.py', 'Does not exist')
-        self.assertTrue(file, "Method is broken")
+        self.assertTrue(file, "Method is broken!")
