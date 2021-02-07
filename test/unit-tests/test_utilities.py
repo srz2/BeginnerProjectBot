@@ -1,5 +1,7 @@
 import unittest
-from projectbot.Utilities import is_recongized_difficulty, create_link_reference, check_file_exists
+from projectbot.Utilities import is_recongized_difficulty
+from projectbot.Utilities import create_link_reference
+from projectbot.Utilities import check_file_exists
 
 class ReconigzedDifficulty(unittest.TestCase):
     def test_recnogized_difficulty_all(self):
