@@ -43,7 +43,7 @@ class ReconigzedDifficulty(unittest.TestCase):
 class LinkFormatted(unittest.TestCase):
     def test_link_format(self):
         url = ResponseFormatter('https://github.com/srz2/BeginnerProjectBot')
-        link = url.create_link_reference('Google','https://www.google.com/')
+        link = url.create_link_reference('Google','https://google.com/')
         self.assertEqual(link, '- [Google](https://google.com/)\n')
 class FileExists(unittest.TestCase):
     def test_does_file_exist(self):
