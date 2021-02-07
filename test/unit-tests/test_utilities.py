@@ -54,5 +54,5 @@ class FileExists(unittest.TestCase):
         file = check_file_exists('src/bot.py', 'Does not exist')
         self.assertTrue(file, "Method is broken!")
     def test_does_file_not_exist(self):
-        file = check_file_exists(None)
+        file = check_file_exists(None, 'No file found')
         self.assertFalse(file, 'Method always returns True!')
