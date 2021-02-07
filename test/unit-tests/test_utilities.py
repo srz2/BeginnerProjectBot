@@ -1,5 +1,8 @@
 import unittest
-from projectbot.Utilities import *
+
+from src.projectbot.Utilities import is_recongized_difficulty, check_file_exists
+from src.projectbot.Utilities import ResponseFormatter
+
 
 class ReconigzedDifficulty(unittest.TestCase):
     def test_recnogized_difficulty_all(self):
@@ -39,7 +42,8 @@ class ReconigzedDifficulty(unittest.TestCase):
         self.assertTrue(is_recognized, 'Is not a reconigzed difficulty')
 class LinkFormatted(unittest.TestCase):
     def test_link_format(self):
-        link = create_link_reference('Google','https://www.google.com/')
+        url = ResponseFormatter()
+        link = url.create_link_reference('Google','https://www.google.com/')
         self.assertEqual(link, '- [Google][https://google.com]')
 class FileExists(unittest.TestCase):
     def test_does_file_exist(self):
