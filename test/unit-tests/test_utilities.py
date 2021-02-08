@@ -3,7 +3,7 @@ import unittest
 from projectbot.Utilities import is_recongized_difficulty, check_file_exists
 from projectbot.Utilities import ResponseFormatter
 import configparser
-from projectbot.Constants import Asset
+from projectbot.Configuration import Configuration
 
 
 class ReconigzedDifficulty(unittest.TestCase):
@@ -44,9 +44,10 @@ class ReconigzedDifficulty(unittest.TestCase):
         self.assertTrue(is_recognized, 'Is not a reconigzed difficulty')
 class LinkFormatted(unittest.TestCase):
     def test_link_format(self):
-        config = configparser.ConfigParser()
-        config.read(Asset.file_praw_ini)
-        url = ResponseFormatter(config['App Information']['repo_url'])
+        parser = Configuration()
+        parser.init_config_with_ini()
+        config = parser.config
+        url = ResponseFormatter(config['repo_url'])
         link = url.create_link_reference('Google','https://google.com/')
         self.assertEqual(link, '- [Google](https://google.com/)\n', 'Link not formatted')
 class FileExists(unittest.TestCase):
