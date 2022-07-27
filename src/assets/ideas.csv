@@ -17,7 +17,7 @@ Idea, difficulty, description
 "Random Password Generator", "medium", "Create a generator based on length, number of numbers, and number of symbols to include"
 "Random Wikipedia Article", "hard", "Search Wikipedia and fetch a random article. Then it asks the user if he wants to read that article or not. If the answer is yes, the material is shown; otherwise, another random report is presented."
 "Reddit Bot", "medium", "Create a bot with a purpose (eg: Reply to a user who calls your bot, tell a joke, or something you find interesting). Use a library like PRAW to help."
-"Scheduled Internet GoTo Clock", "hard", "Ask the user for a URL and how long of a dely. After that delay, open the default web browser and go to that page"
+"Scheduled Internet GoTo Clock", "hard", "Ask the user for a URL and how long of a delay. After that delay, open the default web browser and go to that page"
 "Tic-Tac-Toe", "medium", "Create a game of tic-tac-toe in the CLI. For a harder challenge, use a library like Pygame to add sounds and a UI with graphics"
 "Steganography", "medium", "Create a program which will encrypt a message and decryt to share information with people easily and securly. Try to implement something like a Ceaser Cipher for it."
 "Currency converter", "medium", "The main focus should be the primary function, that is, converting currency units from one to another. To make this more challenging, get the current conversion rates from the internet"
